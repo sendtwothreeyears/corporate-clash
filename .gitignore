@@ -1,0 +1,6 @@
+node_modules/
+dist/
+
+refactor-plan.md
+
+.claude/settings.local.json
