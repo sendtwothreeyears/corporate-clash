@@ -1,16 +1,24 @@
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Renderer as IRenderer } from './types.js';
 
-export function createOffsetRenderer(inner: IRenderer, offsetX: number, offsetY: number): IRenderer {
+export function createOffsetRenderer(
+  inner: IRenderer,
+  offsetX: number,
+  offsetY: number,
+): IRenderer {
   return {
-    get stage() { return inner.stage; },
+    get stage() {
+      return inner.stage;
+    },
     drawRect(pixelX, pixelY, width, height, color) {
       inner.drawRect(pixelX + offsetX, pixelY + offsetY, width, height, color);
     },
     drawText(text, pixelX, pixelY, options) {
       inner.drawText(text, pixelX + offsetX, pixelY + offsetY, options);
     },
-    clear() { inner.clear(); },
+    clear() {
+      inner.clear();
+    },
   };
 }
 

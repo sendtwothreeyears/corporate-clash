@@ -1,9 +1,6 @@
 import type { Renderer } from '../../engine/types.js';
 import type { CorporateWorld, Manager } from './types.js';
-import {
-  CANVAS_HEIGHT,
-  RIGHT_PANEL_WIDTH,
-} from '../../engine/types.js';
+import { CANVAS_HEIGHT, RIGHT_PANEL_WIDTH } from '../../engine/types.js';
 
 export class RightPanelManager implements Manager {
   display(world: CorporateWorld) {
@@ -24,13 +21,7 @@ export class RightPanelManager implements Manager {
 
   render(world: CorporateWorld, renderer: Renderer): void {
     if (world.phase === 'playing') {
-      renderer.drawRect(
-        0,
-        0,
-        RIGHT_PANEL_WIDTH,
-        CANVAS_HEIGHT,
-        0x000000,
-      );
+      renderer.drawRect(0, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x000000);
       return;
     }
   }
