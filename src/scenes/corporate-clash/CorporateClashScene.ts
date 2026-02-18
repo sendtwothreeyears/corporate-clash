@@ -1,8 +1,10 @@
-import type { Scene, GameContext, Renderer } from '../../engine/types.js';
-import type { CorporateWorld, Manager } from './types.js';
-import { createWorld } from './types.js';
-import { InputManager } from './InputManager.js';
-import { MapRenderManager } from './MapRenderManager.js';
+import type { Scene, GameContext, Renderer } from "../../engine/types.js";
+import type { CorporateWorld, Manager } from "./types.js";
+import { createWorld } from "./types.js";
+import { InputManager } from "./InputManager.js";
+import { MapRenderManager } from "./MapRenderManager.js";
+import { HUDManager } from "./HUDManager.js";
+import { EconomyManager } from "./EconomyManager.js";
 
 export class CorporateClashScene implements Scene {
   private world!: CorporateWorld;
@@ -12,10 +14,12 @@ export class CorporateClashScene implements Scene {
     this.world = createWorld(ctx.gridSize);
     this.managers = [
       new InputManager(),
+      new EconomyManager(),
       new MapRenderManager(),
       // new GameplayManager(),
       // new RenderManager(),
       // new UIManager(),
+      new HUDManager(),
     ];
   }
 
