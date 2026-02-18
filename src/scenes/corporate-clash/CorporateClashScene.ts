@@ -7,6 +7,8 @@ import { HUDManager } from './HUDManager.js';
 import { EconomyManager } from './EconomyManager.js';
 import { EmployeePanelManager } from './EmployeePanelManager.js';
 import { EmployeeManager } from './EmployeeManager.js';
+import { BuildingManager } from './BuildingManager.js';
+import { BuildingPanelManager } from './BuildingPanelManager.js';
 
 export class CorporateClashScene implements Scene {
   private world!: CorporateWorld;
@@ -18,11 +20,10 @@ export class CorporateClashScene implements Scene {
       new InputManager(),
       new EconomyManager(),
       new MapRenderManager(),
-      // new GameplayManager(),
-      // new RenderManager(),
-      // new UIManager(),
       new HUDManager(),
+      new BuildingManager(),
       new EmployeeManager(),
+      new BuildingPanelManager(),
       new EmployeePanelManager(),
     ];
   }
