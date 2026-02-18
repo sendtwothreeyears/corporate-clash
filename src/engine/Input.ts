@@ -24,15 +24,17 @@ export class Input {
     this.canvas = canvas;
 
     this.onClick = (e: MouseEvent) => {
+      const rect = this.canvas.getBoundingClientRect()
       if (e.button === 2) {
-        this.scene?.onRightClick(e.clientX, e.clientY);
+        this.scene?.onRightClick(e.clientX - rect.left, e.clientY - rect.top);
       } else if (e.button === 0) {
-        this.scene?.onLeftClick(e.clientX, e.clientY);
+        this.scene?.onLeftClick(e.clientX - rect.left, e.clientY - rect.top);
       }
     };
 
     this.onMouseMove = (e: MouseEvent) => {
-      this.scene?.onMouseMove(e.clientX, e.clientY);
+      const rect = this.canvas.getBoundingClientRect();
+      this.scene?.onMouseMove(e.clientX - rect.left, e.clientY - rect.top);
     };
 
     this.onKeyDown = (e: KeyboardEvent) => {

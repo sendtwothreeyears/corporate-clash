@@ -4,14 +4,15 @@ import { createWorld } from './types.js';
 import { RightPanelManager } from './RightPanelManager.js';
 import { LeftPanelManager } from './LeftPanelManager.js';
 import { MapManager } from './MapManager.js';
+import { EconomyManager } from './EconomyManager.js';
 
-function calcualteRelativePixelXY(pixelX: number, pixelY: number, manager: Manager): { pixelX: number; pixelY: number } {
+function calculateRelativePixelXY(pixelX: number, pixelY: number, manager: Manager): { pixelX: number; pixelY: number } {
   if (manager instanceof LeftPanelManager) {
     return { pixelX, pixelY };
   } else if (manager instanceof MapManager) {
-    return { pixelX: pixelX - LEFT_PANEL_WIDTH, pixelY };
+    return { pixelX: pixelX - LEFT_PANEL_WIDTH, pixelY: pixelY };
   } else if (manager instanceof RightPanelManager) {
-    return { pixelX: pixelX - (CANVAS_WIDTH - LEFT_PANEL_WIDTH), pixelY };
+    return { pixelX: pixelX - (CANVAS_WIDTH - LEFT_PANEL_WIDTH), pixelY: pixelY };
   }
   return { pixelX, pixelY };
 }
@@ -26,6 +27,7 @@ export class CorporateClashScene implements Scene {
       new MapManager(),
       new LeftPanelManager(),
       new RightPanelManager(),
+      new EconomyManager(),
     ];
   }
 
@@ -42,21 +44,21 @@ export class CorporateClashScene implements Scene {
 
   onRightClick(pixelX: number, pixelY: number): void {
     for (const m of this.managers) {
-      const { pixelX: relativeX, pixelY: relativeY } = calcualteRelativePixelXY(pixelX, pixelY, m);
+      const { pixelX: relativeX, pixelY: relativeY } = calculateRelativePixelXY(pixelX, pixelY, m);
       m.onRightClick?.(this.world, relativeX, relativeY);
     }
   }
 
   onLeftClick(pixelX: number, pixelY: number): void {
     for (const m of this.managers) {
-      const { pixelX: relativeX, pixelY: relativeY } = calcualteRelativePixelXY(pixelX, pixelY, m);
+      const { pixelX: relativeX, pixelY: relativeY } = calculateRelativePixelXY(pixelX, pixelY, m);
       m.onLeftClick?.(this.world, relativeX, relativeY);
     }
   }
 
   onMouseMove(pixelX: number, pixelY: number): void {
     for (const m of this.managers) {
-      const { pixelX: relativeX, pixelY: relativeY } = calcualteRelativePixelXY(pixelX, pixelY, m);
+      const { pixelX: relativeX, pixelY: relativeY } = calculateRelativePixelXY(pixelX, pixelY, m);
       m.onMouseMove?.(this.world, relativeX, relativeY);
     }
   }

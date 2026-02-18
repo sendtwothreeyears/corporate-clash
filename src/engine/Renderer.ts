@@ -1,6 +1,5 @@
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Renderer as IRenderer } from './types.js';
-import { CELL_SIZE } from './types.js';
 
 export class Renderer implements IRenderer {
   private app: Application;

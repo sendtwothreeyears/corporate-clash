@@ -20,8 +20,6 @@ export class RightPanelManager implements Manager {
   }
 
   render(world: CorporateWorld, renderer: Renderer): void {
-    const { funds, buildings, employees } = this.display(world);
-
     if (world.phase === 'playing') {
       // Right grid
       renderer.drawRect(LEFT_PANEL_WIDTH + GRID_SIZE * CELL_SIZE, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x000000);

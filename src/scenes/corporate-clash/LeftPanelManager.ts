@@ -1,6 +1,6 @@
 import type { Renderer } from '../../engine/types.js';
 import type { CorporateWorld, Manager } from './types.js';
-import { CANVAS_HEIGHT, GRID_SIZE, LEFT_PANEL_WIDTH } from '../../engine/types.js';
+import { CANVAS_HEIGHT, LEFT_PANEL_WIDTH } from '../../engine/types.js';
 
 export class LeftPanelManager implements Manager {
   display(world: CorporateWorld) {
@@ -20,8 +20,6 @@ export class LeftPanelManager implements Manager {
   }
 
   render(world: CorporateWorld, renderer: Renderer): void {
-    const { funds, buildings, employees } = this.display(world);
-
     if (world.phase === 'playing') {
       // Right grid
       renderer.drawRect(0, 0, LEFT_PANEL_WIDTH, CANVAS_HEIGHT, 0x000000);
