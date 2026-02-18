@@ -5,6 +5,8 @@ import { InputManager } from './InputManager.js';
 import { MapRenderManager } from './MapRenderManager.js';
 import { HUDManager } from './HUDManager.js';
 import { EconomyManager } from './EconomyManager.js';
+import { EmployeePanelManager } from './EmployeePanelManager.js';
+import { EmployeeManager } from './EmployeeManager.js';
 
 export class CorporateClashScene implements Scene {
   private world!: CorporateWorld;
@@ -20,6 +22,8 @@ export class CorporateClashScene implements Scene {
       // new RenderManager(),
       // new UIManager(),
       new HUDManager(),
+      new EmployeeManager(),
+      new EmployeePanelManager(),
     ];
   }
 
