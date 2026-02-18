@@ -1,5 +1,5 @@
 import type { Renderer } from '../../engine/types.js';
-import { CELL_SIZE, LEFT_PANEL_WIDTH } from '../../engine/types.js';
+import { CELL_SIZE } from '../../engine/types.js';
 import {
   BUILDING_CONFIG,
   BUILDING_TYPES,
@@ -9,7 +9,7 @@ import {
   type GridPos,
   type Manager,
 } from './types.js';
-import { Assets, Sprite, Texture } from 'pixi.js';
+import { Assets, Texture } from 'pixi.js';
 
 export class MapManager implements Manager {
   private buildingTextures = new Map<string, Texture>();
@@ -159,13 +159,12 @@ export class MapManager implements Manager {
         if (tile.building) {
           const texture = this.buildingTextures.get(tile.building.type);
           if (texture) {
-            const sprite = new Sprite(texture);
-            sprite.anchor.set(0.5, 0.5);
-            sprite.x = LEFT_PANEL_WIDTH + col * CELL_SIZE + CELL_SIZE / 2;
-            sprite.y = row * CELL_SIZE + CELL_SIZE / 2;
-            sprite.width = CELL_SIZE;
-            sprite.height = CELL_SIZE;
-            renderer.stage.addChild(sprite);
+            renderer.drawSprite(
+              texture,
+              col * CELL_SIZE,
+              row * CELL_SIZE,
+              { width: CELL_SIZE, height: CELL_SIZE },
+            );
           }
         }
       }

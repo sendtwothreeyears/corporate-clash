@@ -1,3 +1,5 @@
+import {Container, Texture} from 'pixi.js';
+
 // --- Game Constants ---
 
 export const GRID_SIZE = 4;
@@ -34,8 +36,14 @@ export interface Renderer {
     pixelY: number,
     options?: { fontSize?: number; color?: number; anchor?: number },
   ): void;
+  drawSprite(
+    texture: Texture,
+    pixelX: number,
+    pixelY: number,
+    options?: { anchorX?: number; anchorY?: number, width?: number, height?: number },
+  ): void;
   clear(): void;
-  readonly stage: import('pixi.js').Container;
+  readonly stage: Container;
 }
 
 export interface Scene {
