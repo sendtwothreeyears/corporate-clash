@@ -23,12 +23,7 @@ export class Renderer implements IRenderer {
     color: number,
   ): void {
     const g = new Graphics();
-    g.rect(
-      pixelX,
-      pixelY,
-      width,
-      height,
-    );
+    g.rect(pixelX, pixelY, width, height);
     g.fill(color);
     this.drawContainer.addChild(g);
   }

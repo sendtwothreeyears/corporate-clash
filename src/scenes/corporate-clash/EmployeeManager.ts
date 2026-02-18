@@ -1,3 +1,3 @@
-import type { Manager } from "./types.js";
+import type { Manager } from './types.js';
 
 export class EmployeeManager implements Manager {}

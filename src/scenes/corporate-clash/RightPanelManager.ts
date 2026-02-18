@@ -1,6 +1,12 @@
 import type { Renderer } from '../../engine/types.js';
 import type { CorporateWorld, Manager } from './types.js';
-import { CANVAS_HEIGHT, CELL_SIZE, GRID_SIZE, LEFT_PANEL_WIDTH, RIGHT_PANEL_WIDTH } from '../../engine/types.js';
+import {
+  CANVAS_HEIGHT,
+  CELL_SIZE,
+  GRID_SIZE,
+  LEFT_PANEL_WIDTH,
+  RIGHT_PANEL_WIDTH,
+} from '../../engine/types.js';
 
 export class RightPanelManager implements Manager {
   display(world: CorporateWorld) {
@@ -22,8 +28,13 @@ export class RightPanelManager implements Manager {
   render(world: CorporateWorld, renderer: Renderer): void {
     if (world.phase === 'playing') {
       // Right grid
-      renderer.drawRect(LEFT_PANEL_WIDTH + GRID_SIZE * CELL_SIZE, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x000000);
-
+      renderer.drawRect(
+        LEFT_PANEL_WIDTH + GRID_SIZE * CELL_SIZE,
+        0,
+        RIGHT_PANEL_WIDTH,
+        CANVAS_HEIGHT,
+        0x000000,
+      );
 
       // renderer.drawText(`$${funds.toLocaleString()}`, 10, 10, {
       //   fontSize: 20,

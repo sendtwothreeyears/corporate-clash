@@ -5,7 +5,8 @@ export const CELL_SIZE = 150;
 export const LEFT_PANEL_WIDTH = 200;
 export const RIGHT_PANEL_WIDTH = 200;
 export const CANVAS_HEIGHT = GRID_SIZE * CELL_SIZE; // 600px
-export const CANVAS_WIDTH = GRID_SIZE * CELL_SIZE + LEFT_PANEL_WIDTH + RIGHT_PANEL_WIDTH; // 1000px
+export const CANVAS_WIDTH =
+  GRID_SIZE * CELL_SIZE + LEFT_PANEL_WIDTH + RIGHT_PANEL_WIDTH; // 1000px
 export const TICK_RATE_MS = 150; // ~6.67 ticks/sec
 export const TICK_RATE_S = TICK_RATE_MS / 1000; // 0.15s per tick
 export const MAX_ACCUMULATOR_MS = 1000;

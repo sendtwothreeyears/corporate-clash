@@ -24,7 +24,7 @@ export class Input {
     this.canvas = canvas;
 
     this.onClick = (e: MouseEvent) => {
-      const rect = this.canvas.getBoundingClientRect()
+      const rect = this.canvas.getBoundingClientRect();
       if (e.button === 2) {
         this.scene?.onRightClick(e.clientX - rect.left, e.clientY - rect.top);
       } else if (e.button === 0) {
