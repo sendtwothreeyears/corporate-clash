@@ -117,6 +117,10 @@ export type UIMode =
   | { kind: 'employeePanel'; tile: GridPos }
   | { kind: 'alert' };
 
+export interface DamageReport {
+  buildingsLost: number;
+  employeesLost: number;
+}
 export interface CorporateWorld {
   phase: GamePhase;
   funds: number;
@@ -124,11 +128,14 @@ export interface CorporateWorld {
   selectedTile: GridPos | null;
   uiMode: UIMode;
   hoveredTile: GridPos | null;
+  attackActive: DamageReport | null;
+  attackTimer: number;
 }
 
 // --- Constants ---
 
 export const STARTING_FUNDS = 500_000;
+export const ATTACK_INTERVAL_TICKS = 500;
 
 // --- Factory ---
 
@@ -149,6 +156,8 @@ export function createWorld(gridSize: number): CorporateWorld {
     selectedTile: null,
     uiMode: { kind: 'none' },
     hoveredTile: null,
+    attackActive: null,
+    attackTimer: ATTACK_INTERVAL_TICKS,
   };
 }
 

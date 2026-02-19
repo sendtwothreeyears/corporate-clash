@@ -14,6 +14,8 @@ import { LeftPanelManager } from './LeftPanelManager.js';
 import { MapManager } from './MapManager.js';
 import { EconomyManager } from './EconomyManager.js';
 import { AlertManager } from './AlertManager.js';
+import { AttackManager } from './AttackManager.js';
+
 
 function getManagerOrigin(manager: Manager): { x: number; y: number } {
   if (manager instanceof LeftPanelManager) {
@@ -43,6 +45,7 @@ export class CorporateClashScene implements Scene {
     this.world = createWorld(ctx.gridSize);
     this.managers = [
       new MapManager(),
+      new AttackManager(),
       new LeftPanelManager(),
       new RightPanelManager(),
       new EconomyManager(),
