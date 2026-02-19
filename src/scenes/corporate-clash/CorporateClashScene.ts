@@ -53,6 +53,7 @@ export class CorporateClashScene implements Scene {
   }
 
   update(dt: number): void {
+    if (this.world.uiMode.kind === 'alert') return;
     for (const m of this.managers) m.update?.(this.world, dt);
   }
 
