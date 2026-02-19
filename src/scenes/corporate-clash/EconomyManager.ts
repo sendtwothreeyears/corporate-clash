@@ -1,4 +1,4 @@
-import type { CorporateWorld, Manager } from './types.js';
+import type { CorporateWorld, EmployeeConfig, Manager } from './types.js';
 import {
   getEmployeeCategory,
   OFFICE_EMPLOYEE_CONFIG,
@@ -10,19 +10,12 @@ import {
 
 export class EconomyManager implements Manager {
   calculateProfit(
-    employeeCategory: OfficeType,
+    configMap: Record<string, EmployeeConfig>,
     employee: OfficeEmployeeType | LawfirmEmployeeType,
   ): number {
-    if (employeeCategory === 'office') {
-      return OFFICE_EMPLOYEE_CONFIG[employee as OfficeEmployeeType]
-        .profitPerTick;
-    } else if (employeeCategory === 'lawfirm') {
-      return LAWFIRM_EMPLOYEE_CONFIG[employee as LawfirmEmployeeType]
-        .profitPerTick;
-    } else {
-      return 0;
-    }
+    return configMap[employee].profitPerTick;
   }
+
   update(world: CorporateWorld): void {
     for (const row of world.grid) {
       for (const tile of row) {
@@ -31,10 +24,11 @@ export class EconomyManager implements Manager {
             const employeeCategory: OfficeType = getEmployeeCategory(
               employee.type,
             );
-            world.funds += this.calculateProfit(
-              employeeCategory,
-              employee.type,
-            );
+            const configMap =
+              employeeCategory === 'office'
+                ? OFFICE_EMPLOYEE_CONFIG
+                : LAWFIRM_EMPLOYEE_CONFIG;
+            world.funds += this.calculateProfit(configMap, employee.type);
           }
         }
       }
