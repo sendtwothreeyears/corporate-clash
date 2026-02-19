@@ -140,7 +140,7 @@ export const LAWFIRM_EMPLOYEE_CONFIG: Record<
   juniorLawyer: {
     label: 'Junior Lawyer',
     cost: 50_000,
-    profitPerTick: -100,
+    profitPerTick: -1000,
     color: 0x8e44ad,
     health: 3 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 100,
@@ -148,7 +148,7 @@ export const LAWFIRM_EMPLOYEE_CONFIG: Record<
   associateLawyer: {
     label: 'Associate Lawyer',
     cost: 100_000,
-    profitPerTick: -500,
+    profitPerTick: -5000,
     color: 0x8e44ad,
     health: 4 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 500,
@@ -156,7 +156,7 @@ export const LAWFIRM_EMPLOYEE_CONFIG: Record<
   seniorCounselLawyer: {
     label: 'Senior Counsel Lawyer',
     cost: 200_000,
-    profitPerTick: -1000,
+    profitPerTick: -10000,
     color: 0x8e44ad,
     health: 5 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 1000,

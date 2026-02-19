@@ -103,7 +103,14 @@ export class RightPanelManager implements Manager {
         ? [LAWFIRM_EMPLOYEE_TYPES, LAWFIRM_EMPLOYEE_CONFIG]
         : [OFFICE_EMPLOYEE_TYPES, OFFICE_EMPLOYEE_CONFIG];
 
-    y = this.renderEmployeeOptions(renderer, types, configMap, world.funds, current < capacity, y);
+    y = this.renderEmployeeOptions(
+      renderer,
+      types,
+      configMap,
+      world.funds,
+      current < capacity,
+      y,
+    );
 
     y += 4;
     renderer.drawText('[ESC] Close', PANEL_X, y, {
