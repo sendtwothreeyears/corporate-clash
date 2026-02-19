@@ -25,7 +25,12 @@ export type BuildingType =
   | 'skyscraper'
   | 'lawfirm';
 
-export type EmployeeBuildingType = 'office' | 'lawfirm';
+export const BUILDING_TYPES: BuildingType[] = [
+  'smallOffice',
+  'mediumOffice',
+  'skyscraper',
+  'lawfirm',
+];
 
 export interface BuildingConfig {
   label: string;
@@ -61,13 +66,6 @@ export const BUILDING_CONFIG: Record<BuildingType, BuildingConfig> = {
   },
 };
 
-export const BUILDING_TYPES: BuildingType[] = [
-  'smallOffice',
-  'mediumOffice',
-  'skyscraper',
-  'lawfirm',
-];
-
 // --- Employees ---
 
 export type OfficeEmployeeType =
@@ -76,11 +74,10 @@ export type OfficeEmployeeType =
   | 'engineer'
   | 'marketing';
 
-export type LawfirmEmployeeType = 'juniorLawyer';
-// | 'associateLawyer'
-// | 'seniorCounselLawyer';
-
-export type OfficeType = 'office' | 'law';
+export type LawfirmEmployeeType =
+  | 'juniorLawyer'
+  | 'associateLawyer'
+  | 'seniorCounselLawyer';
 
 export interface EmployeeConfig {
   label: string;
@@ -148,17 +145,33 @@ export const LAWFIRM_EMPLOYEE_CONFIG: Record<
     health: 3 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 100,
   },
+  associateLawyer: {
+    label: 'Associate Lawyer',
+    cost: 100_000,
+    profitPerTick: -500,
+    color: 0x8e44ad,
+    health: 4 * OFFICE_EMPLOYEE_HEALTH,
+    defenseBoost: 500,
+  },
+  seniorCounselLawyer: {
+    label: 'Senior Counsel Lawyer',
+    cost: 200_000,
+    profitPerTick: -1000,
+    color: 0x8e44ad,
+    health: 5 * OFFICE_EMPLOYEE_HEALTH,
+    defenseBoost: 1000,
+  },
 };
 export const LAWFIRM_EMPLOYEE_TYPES: LawfirmEmployeeType[] = [
   'juniorLawyer',
-  // | 'associateLawyer'
-  // | 'seniorCounselLawyer';
+  'associateLawyer',
+  'seniorCounselLawyer',
 ];
 
-export function getEmployeeCategory(type: string): OfficeType | null {
+export function getEmployeeCategory(type: string): OfficeType {
   if ((OFFICE_EMPLOYEE_TYPES as string[]).includes(type)) return 'office';
-  if ((LAWFIRM_EMPLOYEE_TYPES as string[]).includes(type)) return 'law';
-  return null;
+  if ((LAWFIRM_EMPLOYEE_TYPES as string[]).includes(type)) return 'lawfirm';
+  throw new Error(`Unknown employee type: ${type}`);
 }
 
 // --- World State ---
@@ -169,6 +182,8 @@ export interface OfficeEmployee {
 export interface LawfirmEmployee {
   type: LawfirmEmployeeType;
 }
+
+export type OfficeType = 'office' | 'lawfirm';
 
 export interface Building {
   type: BuildingType;
