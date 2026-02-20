@@ -240,8 +240,9 @@ export interface DamageReport {
 // --- Player Actions (client → server) ---
 
 export type GameAction =
-  | { kind: 'build'; row: number; col: number; buildingType: BuildingType }
-  | { kind: 'hire'; row: number; col: number; employeeType: EmployeeType };
+  | { kind: 'build'; playerId: string; row: number; col: number; buildingType: BuildingType }
+  | { kind: 'hire'; playerId: string; row: number; col: number; employeeType: EmployeeType }
+  | { kind: 'attack'; playerId: string; targetId: string; troops: AttackTroop[] };
 
 // --- Server-authoritative state (broadcast to all clients) ---
 

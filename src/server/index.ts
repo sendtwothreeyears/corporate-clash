@@ -10,49 +10,166 @@ import {
   type CorporateWorld,
   type GameAction,
   type GameState,
+  type PlayerInfo,
 } from '../scenes/corporate-clash/types.js';
 import { EconomyManager } from '../scenes/corporate-clash/EconomyManager.js';
-import { AttackManager } from '../scenes/corporate-clash/AttackManager.js';
 
 const TICK_RATE_MS = 150;
+const MAX_PLAYERS = 20;
 
 const app = new Hono();
-const world = createWorld(GRID_SIZE);
-
-const economyManager = new EconomyManager();
-const attackManager = new AttackManager();
 
 interface SSEClient {
   resolve: (tick: { data: string; id: number }) => void;
 }
 
-const clients = new Set<SSEClient>();
+interface PlayerState {
+  id: string;
+  name: string;
+  world: CorporateWorld;
+  client: SSEClient | null;
+  attackCooldown: number;
+}
+
+const players = new Map<string, PlayerState>();
+const economyManager = new EconomyManager();
 
 let tickId = 0;
 
-function toGameState(w: CorporateWorld): GameState {
-  const { phase, funds, mapDefense, grid, attackActive, attackTimer } = w;
-  return { phase, funds, mapDefense, grid, attackActive, attackTimer };
+function generateId(): string {
+  return Math.random().toString(36).slice(2, 10);
 }
 
+function toGameState(player: PlayerState): GameState {
+  const { phase, funds, mapDefense, grid, attackActive, attackTimer } =
+    player.world;
+
+  const scoreboard: PlayerInfo[] = [];
+  for (const p of players.values()) {
+    let buildingCount = 0;
+    let employeeCount = 0;
+    for (const row of p.world.grid) {
+      for (const tile of row) {
+        if (tile.building) {
+          buildingCount++;
+          employeeCount += tile.building.employees.length;
+        }
+      }
+    }
+    scoreboard.push({
+      id: p.id,
+      name: p.name,
+      funds: p.world.funds,
+      buildingCount,
+      employeeCount,
+    });
+  }
+
+  return {
+    phase,
+    funds,
+    mapDefense,
+    grid,
+    attackActive,
+    attackTimer,
+    attackCooldown: player.attackCooldown,
+    players: scoreboard,
+  };
+}
+
+// Game loop: iterate all players
 setInterval(() => {
-  world.attackActive = null;
-  economyManager.update(world);
-  attackManager.update(world);
   tickId++;
 
-  const data = JSON.stringify(toGameState(world));
-  for (const client of clients) {
-    client.resolve({ data, id: tickId });
+  for (const player of players.values()) {
+    player.world.attackActive = null;
+    economyManager.update(player.world);
+    if (player.attackCooldown > 0) {
+      player.attackCooldown--;
+    }
+  }
+
+  // Broadcast to each player's client
+  for (const player of players.values()) {
+    if (player.client) {
+      const data = JSON.stringify(toGameState(player));
+      player.client.resolve({ data, id: tickId });
+    }
   }
 }, TICK_RATE_MS);
 
-app.get('/api', (c) => {
-  return c.json(toGameState(world));
+// POST /game/join — register a new player
+app.post('/game/join', async (c) => {
+  const body = await c.req.json<{ name?: string }>();
+
+  if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
+    return c.json({ error: 'name is required' }, 400);
+  }
+
+  const name = body.name.trim().slice(0, 20);
+
+  // Reject duplicate names
+  for (const p of players.values()) {
+    if (p.name === name) {
+      return c.json({ error: 'name already taken' }, 400);
+    }
+  }
+
+  if (players.size >= MAX_PLAYERS) {
+    return c.json({ error: 'server is full' }, 400);
+  }
+
+  const playerId = generateId();
+  const world = createWorld(GRID_SIZE);
+
+  const player: PlayerState = {
+    id: playerId,
+    name,
+    world,
+    client: null,
+    attackCooldown: 0,
+  };
+
+  players.set(playerId, player);
+
+  return c.json({ playerId });
 });
 
+// GET /api?playerId=xxx — return that player's game state
+app.get('/api', (c) => {
+  const playerId = c.req.query('playerId');
+  if (!playerId) {
+    return c.json({ error: 'playerId query param required' }, 400);
+  }
+
+  const player = players.get(playerId);
+  if (!player) {
+    return c.json({ error: 'player not found' }, 404);
+  }
+
+  return c.json(toGameState(player));
+});
+
+// POST /game/action — apply action to a player's world
 app.post('/game/action', async (c) => {
   const action = await c.req.json<GameAction>();
+  const { playerId } = action;
+
+  if (!playerId) {
+    return c.json({ error: 'playerId is required' }, 400);
+  }
+
+  const player = players.get(playerId);
+  if (!player) {
+    return c.json({ error: 'player not found' }, 404);
+  }
+
+  const world = player.world;
+
+  if (action.kind === 'attack') {
+    return c.json({ error: 'attack not yet implemented' }, 501);
+  }
+
   const { row, col } = action;
 
   if (
@@ -106,13 +223,26 @@ app.post('/game/action', async (c) => {
   return c.json({ error: 'unknown action' }, 400);
 });
 
+// GET /game/stream?playerId=xxx — scoped SSE for a single player
 app.get('/game/stream', (c) => {
+  const playerId = c.req.query('playerId');
+  if (!playerId) {
+    return c.text('playerId query param required', 400);
+  }
+
+  const player = players.get(playerId);
+  if (!player) {
+    return c.text('player not found', 404);
+  }
+
   return streamSSE(c, async (stream) => {
     const client: SSEClient = { resolve: () => {} };
-    clients.add(client);
+    player.client = client;
 
     stream.onAbort(() => {
-      clients.delete(client);
+      if (player.client === client) {
+        player.client = null;
+      }
     });
 
     while (true) {
