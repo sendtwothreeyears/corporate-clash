@@ -43,12 +43,24 @@ export class AlertManager implements Manager {
       anchor: 0.5,
     });
 
-    const alertMessage = `You have been attacked by a rival company! Damage Report: Employees Lost ${world.attackActive?.employeesLost} Buildings Lost ${world.attackActive?.buildingsLost}`;
-    renderer.drawText(alertMessage, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 10, {
-      fontSize: 14,
-      color: 0xffffff,
-      anchor: 0.5,
-    });
+    renderer.drawText(
+      'You have been attacked by a rival company!',
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 - 30,
+      { fontSize: 14, color: 0xffffff, anchor: 0.5 },
+    );
+    renderer.drawText(
+      `Employees Lost: ${world.attackActive?.employeesLost}`,
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2,
+      { fontSize: 14, color: 0xffffff, anchor: 0.5 },
+    );
+    renderer.drawText(
+      `Buildings Lost: ${world.attackActive?.buildingsLost}`,
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 + 20,
+      { fontSize: 14, color: 0xffffff, anchor: 0.5 },
+    );
 
     const alertSubMessage = 'Space bar to continue...';
     renderer.drawText(
