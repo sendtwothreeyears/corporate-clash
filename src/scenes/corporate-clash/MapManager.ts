@@ -164,7 +164,13 @@ export class MapManager implements Manager {
     if (!buildingType) return;
 
     const { row, col } = world.uiMode.tile;
-    this.sendAction({ kind: 'build', playerId: world.playerId, row, col, buildingType });
+    this.sendAction({
+      kind: 'build',
+      playerId: world.playerId,
+      row,
+      col,
+      buildingType,
+    });
 
     const panel =
       buildingType === 'lawfirm'
