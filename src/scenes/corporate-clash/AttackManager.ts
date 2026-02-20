@@ -34,6 +34,12 @@ export class AttackManager implements Manager {
       }
     }
 
-    world.attackActive = { buildingsLost, employeesLost };
+    world.attackActive = {
+      buildingsLost,
+      employeesLost,
+      attackerName: null,
+      defender: null,
+      isAttacker: false,
+    };
   }
 }

@@ -82,19 +82,16 @@ setInterval(() => {
   tickId++;
 
   for (const player of players.values()) {
-    player.world.attackActive = null;
     economyManager.update(player.world);
-    if (player.attackCooldown > 0) {
-      player.attackCooldown--;
-    }
+    if (player.attackCooldown > 0) player.attackCooldown--;
   }
 
-  // Broadcast to each player's client
   for (const player of players.values()) {
     if (player.client) {
       const data = JSON.stringify(toGameState(player));
       player.client.resolve({ data, id: tickId });
     }
+    player.world.attackActive = null;
   }
 }, TICK_RATE_MS);
 
