@@ -252,7 +252,7 @@ export class MapManager implements Manager {
         sortedTiles.push({ row, col, depth: r.row + r.col });
       }
     }
-    
+
     sortedTiles.sort((a, b) => a.depth - b.depth);
 
     for (const { row, col } of sortedTiles) {
@@ -280,12 +280,11 @@ export class MapManager implements Manager {
           height: rightH,
           alpha: tileAlpha,
         });
-        renderer.drawSprite(
-          this.tileTextures.top,
-          x - HALF_W,
-          y - HALF_H,
-          { width: ISO_TILE_W, height: ISO_TILE_H, alpha: tileAlpha },
-        );
+        renderer.drawSprite(this.tileTextures.top, x - HALF_W, y - HALF_H, {
+          width: ISO_TILE_W,
+          height: ISO_TILE_H,
+          alpha: tileAlpha,
+        });
       } else {
         renderer.drawDiamond(
           x,
@@ -298,7 +297,7 @@ export class MapManager implements Manager {
       }
     }
 
-    // buildings 
+    // buildings
     const buildings: { row: number; col: number; depth: number }[] = [];
     for (let row = 0; row < world.grid.length; row++) {
       for (let col = 0; col < world.grid[row].length; col++) {
