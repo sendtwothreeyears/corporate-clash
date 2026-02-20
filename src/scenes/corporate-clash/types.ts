@@ -196,6 +196,20 @@ export interface LawfirmEmployee {
 
 export type OfficeType = 'office' | 'lawfirm';
 
+export interface PlayerInfo {
+  id: string;
+  name: string;
+  funds: number;
+  buildingCount: number;
+  employeeCount: number;
+}
+
+export interface AttackTroop {
+  row: number;
+  col: number;
+  count: number;
+}
+
 export interface Building {
   type: BuildingType;
   employees: (OfficeEmployee | LawfirmEmployee)[];
@@ -212,11 +226,15 @@ export type UIMode =
   | { kind: 'buildingPanel'; tile: GridPos }
   | { kind: 'officeEmployeePanel'; tile: GridPos }
   | { kind: 'lawfirmEmployeePanel'; tile: GridPos }
-  | { kind: 'alert' };
+  | { kind: 'alert' }
+  | { kind: 'attackPanel' };
 
 export interface DamageReport {
   buildingsLost: number;
   employeesLost: number;
+  attackerName: string | null;
+  defender: string | null;
+  isAttacker: boolean;
 }
 
 // --- Player Actions (client → server) ---
@@ -234,6 +252,8 @@ export interface GameState {
   grid: Tile[][];
   attackActive: DamageReport | null;
   attackTimer: number;
+  attackCooldown: number;
+  players: PlayerInfo[];
 }
 
 // --- Full client state (GameState + per-player UI) ---
@@ -266,6 +286,8 @@ export function createWorld(gridSize: number): CorporateWorld {
     hoveredTile: null,
     attackActive: null,
     attackTimer: ATTACK_INTERVAL_TICKS,
+    attackCooldown: 0,
+    players: [],
   };
 }
 
