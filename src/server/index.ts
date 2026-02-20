@@ -16,6 +16,7 @@ import { EconomyManager } from '../scenes/corporate-clash/EconomyManager.js';
 
 const TICK_RATE_MS = 150;
 const MAX_PLAYERS = 20;
+const ATTACK_COOLDOWN_TICKS = 100;
 
 const app = new Hono();
 
@@ -164,7 +165,112 @@ app.post('/game/action', async (c) => {
   const world = player.world;
 
   if (action.kind === 'attack') {
-    return c.json({ error: 'attack not yet implemented' }, 501);
+    const target = players.get(action.targetId);
+    if (!target) return c.json({ error: 'target not found' }, 400);
+    if (action.targetId === action.playerId)
+      return c.json({ error: 'cannot attack yourself' }, 400);
+    if (player.attackCooldown > 0)
+      return c.json({ error: 'attack on cooldown' }, 400);
+    if (!action.troops || action.troops.length === 0)
+      return c.json({ error: 'no troops selected' }, 400);
+
+    // Validate troops from attacker's buildings
+    let totalAttackers = 0;
+    for (const troop of action.troops) {
+      const { row: tr, col: tc, count } = troop;
+      if (
+        tr < 0 ||
+        tr >= player.world.grid.length ||
+        tc < 0 ||
+        tc >= player.world.grid[0].length
+      ) {
+        return c.json({ error: 'troop source out of bounds' }, 400);
+      }
+      const tile = player.world.grid[tr][tc];
+      if (!tile.building)
+        return c.json({ error: `no building at (${tr},${tc})` }, 400);
+      if (count < 1 || count > tile.building.employees.length) {
+        return c.json(
+          { error: `invalid troop count at (${tr},${tc})` },
+          400,
+        );
+      }
+      totalAttackers += count;
+    }
+
+    // Remove troops from attacker's buildings
+    for (const troop of action.troops) {
+      const tile = player.world.grid[troop.row][troop.col];
+      tile.building!.employees.splice(0, troop.count);
+      if (tile.building!.employees.length === 0) {
+        tile.building = null;
+      }
+    }
+
+    // Count defenders (all employees across target's grid)
+    let totalDefenders = 0;
+    for (const row of target.world.grid) {
+      for (const tile of row) {
+        if (tile.building) totalDefenders += tile.building.employees.length;
+      }
+    }
+
+    // RISK-style combat: paired 1v1 rounds
+    let attackersLeft = totalAttackers;
+    let defendersLeft = totalDefenders;
+    while (attackersLeft > 0 && defendersLeft > 0) {
+      const attackRoll = Math.random();
+      const defenseRoll = Math.random();
+      if (attackRoll > defenseRoll) {
+        defendersLeft--;
+      } else {
+        attackersLeft--;
+      }
+    }
+
+    // Apply defender losses randomly across buildings
+    let defenderLosses = totalDefenders - defendersLeft;
+    let defenderBuildingsLost = 0;
+    const defenderEmployeesLost = defenderLosses;
+
+    for (const row of target.world.grid) {
+      for (const tile of row) {
+        if (!tile.building || defenderLosses <= 0) continue;
+        const removable = Math.min(
+          defenderLosses,
+          tile.building.employees.length,
+        );
+        tile.building.employees.splice(0, removable);
+        defenderLosses -= removable;
+        if (tile.building.employees.length === 0) {
+          tile.building = null;
+          defenderBuildingsLost++;
+        }
+      }
+    }
+
+    const attackerEmployeesLost = totalAttackers - attackersLeft;
+
+    // Set damage reports on both players
+    player.world.attackActive = {
+      buildingsLost: 0,
+      employeesLost: attackerEmployeesLost,
+      attackerName: null,
+      defender: target.name,
+      isAttacker: true,
+    };
+
+    target.world.attackActive = {
+      buildingsLost: defenderBuildingsLost,
+      employeesLost: defenderEmployeesLost,
+      attackerName: player.name,
+      defender: null,
+      isAttacker: false,
+    };
+
+    player.attackCooldown = ATTACK_COOLDOWN_TICKS;
+
+    return c.json({ ok: true });
   }
 
   const { row, col } = action;
