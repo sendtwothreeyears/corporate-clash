@@ -15,6 +15,8 @@ export const STARTING_FUNDS = 500_000;
 export const ATTACK_INTERVAL_TICKS = 200;
 export const MAP_DEFENSE = 0;
 export const OFFICE_EMPLOYEE_HEALTH = 1;
+export const ATTACK_POWER_MIN = 100;
+export const ATTACK_POWER_MAX = 500;
 
 // --- Buildings ---
 export type BuildingType =
@@ -240,6 +242,7 @@ export interface GameState {
   grid: Tile[][];
   attackActive: DamageReport | null;
   attackTimer: number;
+  alertInfo: AlertInfo | null;
 }
 
 // --- Full client state (GameState + per-player UI) ---
@@ -248,7 +251,6 @@ export interface CorporateWorld extends GameState {
   selectedTile: GridPos | null;
   uiMode: UIMode;
   hoveredTile: GridPos | null;
-  alertInfo: AlertInfo | null;
 }
 
 export interface AlertInfo {
