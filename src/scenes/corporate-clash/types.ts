@@ -20,13 +20,13 @@ export const OFFICE_EMPLOYEE_HEALTH = 1;
 export type BuildingType =
   | 'smallOffice'
   | 'mediumOffice'
-  | 'skyscraper'
+  | 'largeOffice'
   | 'lawfirm';
 
 export const BUILDING_TYPES: BuildingType[] = [
   'smallOffice',
   'mediumOffice',
-  'skyscraper',
+  'largeOffice',
   'lawfirm',
 ];
 
@@ -50,8 +50,8 @@ export const BUILDING_CONFIG: Record<BuildingType, BuildingConfig> = {
     capacity: 20,
     color: 0x357abd,
   },
-  skyscraper: {
-    label: 'Skyscraper',
+  largeOffice: {
+    label: 'Large Office',
     cost: 400_000,
     capacity: 30,
     color: 0x1a5276,
@@ -166,6 +166,19 @@ export const LAWFIRM_EMPLOYEE_TYPES: LawfirmEmployeeType[] = [
   'seniorCounselLawyer',
 ];
 
+export type EmployeeType = OfficeEmployeeType | LawfirmEmployeeType;
+export type EmployeeBuildingType = OfficeType;
+
+export const EMPLOYEE_TYPES: EmployeeType[] = [
+  ...OFFICE_EMPLOYEE_TYPES,
+  ...LAWFIRM_EMPLOYEE_TYPES,
+];
+
+export const EMPLOYEE_CONFIG: Record<EmployeeType, EmployeeConfig> = {
+  ...OFFICE_EMPLOYEE_CONFIG,
+  ...LAWFIRM_EMPLOYEE_CONFIG,
+};
+
 export function getEmployeeCategory(type: string): OfficeType {
   if ((OFFICE_EMPLOYEE_TYPES as string[]).includes(type)) return 'office';
   if ((LAWFIRM_EMPLOYEE_TYPES as string[]).includes(type)) return 'lawfirm';
@@ -201,16 +214,35 @@ export type UIMode =
   | { kind: 'lawfirmEmployeePanel'; tile: GridPos }
   | { kind: 'alert' };
 
-export interface CorporateWorld {
+export interface DamageReport {
+  buildingsLost: number;
+  employeesLost: number;
+}
+
+// --- Player Actions (client → server) ---
+
+export type GameAction =
+  | { kind: 'build'; row: number; col: number; buildingType: BuildingType }
+  | { kind: 'hire'; row: number; col: number; employeeType: EmployeeType };
+
+// --- Server-authoritative state (broadcast to all clients) ---
+
+export interface GameState {
   phase: GamePhase;
   funds: number;
   mapDefense: number;
   grid: Tile[][];
+  attackActive: DamageReport | null;
+  attackTimer: number;
+}
+
+// --- Full client state (GameState + per-player UI) ---
+
+export interface CorporateWorld extends GameState {
   selectedTile: GridPos | null;
   uiMode: UIMode;
   hoveredTile: GridPos | null;
   alertInfo: AlertInfo | null;
-  attackTimer: number;
 }
 
 export interface AlertInfo {
@@ -240,6 +272,7 @@ export function createWorld(gridSize: number): CorporateWorld {
     uiMode: { kind: 'none' },
     hoveredTile: null,
     alertInfo: null,
+    attackActive: null,
     attackTimer: ATTACK_INTERVAL_TICKS,
   };
 }
