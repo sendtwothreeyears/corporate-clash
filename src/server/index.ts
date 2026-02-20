@@ -12,7 +12,7 @@ import {
   type GameState,
   type PlayerInfo,
 } from '../scenes/corporate-clash/types.js';
-import { EconomyManager } from '../scenes/corporate-clash/EconomyManager.js';
+import { EconomyManager } from './EconomyManager.js';
 
 const TICK_RATE_MS = 150;
 const MAX_PLAYERS = 20;
@@ -101,8 +101,7 @@ setInterval(() => {
         let totalEmployees = 0;
         for (const row of player.world.grid) {
           for (const tile of row) {
-            if (tile.building)
-              totalEmployees += tile.building.employees.length;
+            if (tile.building) totalEmployees += tile.building.employees.length;
           }
         }
 
