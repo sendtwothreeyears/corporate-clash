@@ -166,6 +166,19 @@ export const LAWFIRM_EMPLOYEE_TYPES: LawfirmEmployeeType[] = [
   'seniorCounselLawyer',
 ];
 
+export type EmployeeType = OfficeEmployeeType | LawfirmEmployeeType;
+export type EmployeeBuildingType = OfficeType;
+
+export const EMPLOYEE_TYPES: EmployeeType[] = [
+  ...OFFICE_EMPLOYEE_TYPES,
+  ...LAWFIRM_EMPLOYEE_TYPES,
+];
+
+export const EMPLOYEE_CONFIG: Record<EmployeeType, EmployeeConfig> = {
+  ...OFFICE_EMPLOYEE_CONFIG,
+  ...LAWFIRM_EMPLOYEE_CONFIG,
+};
+
 export function getEmployeeCategory(type: string): OfficeType {
   if ((OFFICE_EMPLOYEE_TYPES as string[]).includes(type)) return 'office';
   if ((LAWFIRM_EMPLOYEE_TYPES as string[]).includes(type)) return 'lawfirm';
@@ -185,7 +198,7 @@ export type OfficeType = 'office' | 'lawfirm';
 
 export interface Building {
   type: BuildingType;
-  employees: OfficeEmployee[] | LawfirmEmployee[];
+  employees: (OfficeEmployee | LawfirmEmployee)[];
 }
 
 export interface Tile {
@@ -205,16 +218,30 @@ export interface DamageReport {
   buildingsLost: number;
   employeesLost: number;
 }
-export interface CorporateWorld {
+
+// --- Player Actions (client → server) ---
+
+export type GameAction =
+  | { kind: 'build'; row: number; col: number; buildingType: BuildingType }
+  | { kind: 'hire'; row: number; col: number; employeeType: EmployeeType };
+
+// --- Server-authoritative state (broadcast to all clients) ---
+
+export interface GameState {
   phase: GamePhase;
   funds: number;
   mapDefense: number;
   grid: Tile[][];
+  attackActive: DamageReport | null;
+  attackTimer: number;
+}
+
+// --- Full client state (GameState + per-player UI) ---
+
+export interface CorporateWorld extends GameState {
   selectedTile: GridPos | null;
   uiMode: UIMode;
   hoveredTile: GridPos | null;
-  attackActive: DamageReport | null;
-  attackTimer: number;
 }
 
 // --- Factory ---
