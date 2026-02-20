@@ -20,14 +20,11 @@ export class LeftPanelManager implements Manager {
       }
     }
 
-    const secondsLeft = Math.ceil(world.attackTimer * TICK_RATE_S);
-
     return {
       funds: world.funds,
       mapDefense: world.mapDefense,
       buildings,
       employees,
-      secondsLeft,
     };
   }
 
@@ -35,8 +32,7 @@ export class LeftPanelManager implements Manager {
     if (world.phase === 'playing') {
       renderer.drawRect(0, 0, LEFT_PANEL_WIDTH, CANVAS_HEIGHT, 0x000000);
 
-      const { funds, mapDefense, buildings, employees, secondsLeft } =
-        this.display(world);
+      const { funds, mapDefense, buildings, employees } = this.display(world);
       renderer.drawText(`$${funds.toLocaleString()}`, 10, 10, {
         fontSize: 20,
         color: 0x2ecc71,
@@ -54,9 +50,22 @@ export class LeftPanelManager implements Manager {
         fontSize: 14,
         color: 0xcccccc,
       });
-      renderer.drawText(`Next attack: ${secondsLeft}`, 10, CANVAS_HEIGHT - 24, {
+      renderer.drawText(`Players: ${world.players.length}`, 10, 136, {
         fontSize: 14,
         color: 0xcccccc,
+      });
+
+      if (world.attackCooldown > 0) {
+        const cooldownSecs = Math.ceil(world.attackCooldown * TICK_RATE_S);
+        renderer.drawText(`Attack cooldown: ${cooldownSecs}s`, 10, CANVAS_HEIGHT - 44, {
+          fontSize: 14,
+          color: 0xe74c3c,
+        });
+      }
+
+      renderer.drawText('[A] Attack', 10, CANVAS_HEIGHT - 24, {
+        fontSize: 14,
+        color: 0xaaaaaa,
       });
     }
   }
