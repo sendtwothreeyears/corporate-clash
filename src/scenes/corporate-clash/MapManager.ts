@@ -38,19 +38,30 @@ export class MapManager implements Manager {
 
   private rotateCoords(row: number, col: number): { row: number; col: number } {
     switch (this.rotation) {
-      case 0: return { row, col };
-      case 1: return { row: col, col: MAX - row };
-      case 2: return { row: MAX - row, col: MAX - col };
-      case 3: return { row: MAX - col, col: row };
+      case 0:
+        return { row, col };
+      case 1:
+        return { row: col, col: MAX - row };
+      case 2:
+        return { row: MAX - row, col: MAX - col };
+      case 3:
+        return { row: MAX - col, col: row };
     }
   }
 
-  private unrotateCoords(row: number, col: number): { row: number; col: number } {
+  private unrotateCoords(
+    row: number,
+    col: number,
+  ): { row: number; col: number } {
     switch (this.rotation) {
-      case 0: return { row, col };
-      case 1: return { row: MAX - col, col: row };
-      case 2: return { row: MAX - row, col: MAX - col };
-      case 3: return { row: col, col: MAX - row };
+      case 0:
+        return { row, col };
+      case 1:
+        return { row: MAX - col, col: row };
+      case 2:
+        return { row: MAX - row, col: MAX - col };
+      case 3:
+        return { row: col, col: MAX - row };
     }
   }
 
