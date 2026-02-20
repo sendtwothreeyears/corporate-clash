@@ -96,14 +96,17 @@ export class MapManager implements Manager {
     );
   }
 
-  onRightClick(world: CorporateWorld, pixelX: number, pixelY: number): void {
+  onRightClick(_world: CorporateWorld, pixelX: number, pixelY: number): void {
     const gridPos = this.pixelToGrid(pixelX, pixelY);
     console.log('Right click at', { pixelX, pixelY }, gridPos);
   }
 
   onLeftClick(world: CorporateWorld, pixelX: number, pixelY: number): void {
     const gridPos = this.pixelToGrid(pixelX, pixelY);
-    if (!this.isInBounds(world, gridPos)) return;
+    if (!this.isInBounds(world, gridPos)) {
+      world.uiMode = { kind: 'none' };
+      return;
+    }
 
     if (
       world.uiMode.kind === 'buildingPanel' ||
@@ -263,6 +266,14 @@ export class MapManager implements Manager {
     const hovered = world.hoveredTile;
     const isHovering = hovered && this.isInBounds(world, hovered);
 
+    const selected =
+      world.uiMode.kind === 'buildingPanel' ||
+      world.uiMode.kind === 'officeEmployeePanel' ||
+      world.uiMode.kind === 'lawfirmEmployeePanel'
+        ? world.uiMode.tile
+        : null;
+    const hasActive = selected || isHovering;
+
     // ground tiles
     const sortedTiles: { row: number; col: number; depth: number }[] = [];
     for (let row = 0; row < world.grid.length; row++) {
@@ -275,45 +286,37 @@ export class MapManager implements Manager {
     sortedTiles.sort((a, b) => a.depth - b.depth);
 
     for (const { row, col } of sortedTiles) {
+      if (!this.tileTextures) continue;
       const { x, y } = this.gridToIso(row, col);
       const isThisTileHovered =
         isHovering && hovered.row === row && hovered.col === col;
-      const tileAlpha = isHovering && !isThisTileHovered ? 0.3 : 1;
+      const isThisTileSelected =
+        selected && selected.row === row && selected.col === col;
+      const tileAlpha =
+        hasActive && !isThisTileHovered && !isThisTileSelected ? 0.3 : 1;
 
-      if (this.tileTextures) {
-        // side face - each side's bounding box is HALF_W wide and scaled
-        const leftH =
-          this.tileTextures.left.height *
-          (HALF_W / this.tileTextures.left.width);
-        const rightH =
-          this.tileTextures.right.height *
-          (HALF_W / this.tileTextures.right.width);
+      const leftH =
+        this.tileTextures.left.height *
+        (HALF_W / this.tileTextures.left.width);
+      const rightH =
+        this.tileTextures.right.height *
+        (HALF_W / this.tileTextures.right.width);
 
-        renderer.drawSprite(this.tileTextures.left, x - HALF_W, y, {
-          width: HALF_W,
-          height: leftH,
-          alpha: tileAlpha,
-        });
-        renderer.drawSprite(this.tileTextures.right, x, y, {
-          width: HALF_W,
-          height: rightH,
-          alpha: tileAlpha,
-        });
-        renderer.drawSprite(this.tileTextures.top, x - HALF_W, y - HALF_H, {
-          width: ISO_TILE_W,
-          height: ISO_TILE_H,
-          alpha: tileAlpha,
-        });
-      } else {
-        renderer.drawDiamond(
-          x,
-          y,
-          ISO_TILE_W,
-          ISO_TILE_H,
-          (row + col) % 2 === 0 ? 0x333333 : 0x222222,
-          { alpha: tileAlpha },
-        );
-      }
+      renderer.drawSprite(this.tileTextures.left, x - HALF_W, y, {
+        width: HALF_W,
+        height: leftH,
+        alpha: tileAlpha,
+      });
+      renderer.drawSprite(this.tileTextures.right, x, y, {
+        width: HALF_W,
+        height: rightH,
+        alpha: tileAlpha,
+      });
+      renderer.drawSprite(this.tileTextures.top, x - HALF_W, y - HALF_H, {
+        width: ISO_TILE_W,
+        height: ISO_TILE_H,
+        alpha: tileAlpha,
+      });
     }
 
     // buildings
@@ -335,6 +338,8 @@ export class MapManager implements Manager {
 
       const isThisHovered =
         isHovering && hovered.row === row && hovered.col === col;
+      const isThisSelected =
+        selected && selected.row === row && selected.col === col;
 
       const { x, y } = this.gridToIso(row, col);
       const scale = ISO_TILE_W / texture.width;
@@ -343,15 +348,7 @@ export class MapManager implements Manager {
       renderer.drawSprite(texture, x - spriteW / 2, y + HALF_H - spriteH + 2, {
         width: spriteW,
         height: spriteH,
-        alpha: isHovering && !isThisHovered ? 0.3 : 1,
-      });
-    }
-
-    if (world.hoveredTile && this.isInBounds(world, world.hoveredTile)) {
-      const { row, col } = world.hoveredTile;
-      const { x, y } = this.gridToIso(row, col);
-      renderer.drawDiamond(x, y, ISO_TILE_W, ISO_TILE_H, 0xffffff, {
-        alpha: 0.3,
+        alpha: hasActive && !isThisHovered && !isThisSelected ? 0.3 : 1,
       });
     }
 
