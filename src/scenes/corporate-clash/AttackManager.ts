@@ -1,13 +1,12 @@
 import {
   ATTACK_INTERVAL_TICKS,
+  BUILDING_CONFIG,
   type CorporateWorld,
   type Manager,
 } from './types.js';
 
 const ATTACK_POWER_MIN = 200;
 const ATTACK_POWER_MAX = 800;
-const EMPLOYEE_DEATH_CHANCE = 0.3;
-
 export class AttackManager implements Manager {
   update(world: CorporateWorld): void {
     world.attackTimer -= 1;
@@ -26,22 +25,27 @@ export class AttackManager implements Manager {
 
     let employeesLost = 0;
     let buildingsLost = 0;
+    let targetLabel = '';
 
     if (effectiveDamage > 0) {
+      const tilesWithBuildings = [];
       for (const row of world.grid) {
         for (const tile of row) {
           if (!tile.building) continue;
+          tilesWithBuildings.push(tile);
+        }
+      }
 
-          const before = tile.building.employees.length;
-          tile.building.employees = tile.building.employees.filter(
-            () => Math.random() > EMPLOYEE_DEATH_CHANCE,
-          );
-          employeesLost += before - tile.building.employees.length;
+      if (tilesWithBuildings.length > 0) {
+        const tile =
+          tilesWithBuildings[Math.floor(Math.random() * tilesWithBuildings.length)];
+        targetLabel = BUILDING_CONFIG[tile.building!.type].label;
+        tile.building!.health -= effectiveDamage;
 
-          if (tile.building.employees.length === 0) {
-            tile.building = null;
-            buildingsLost++;
-          }
+        if (tile.building!.health <= 0) {
+          employeesLost = tile.building!.employees.length;
+          tile.building = null;
+          buildingsLost++;
         }
       }
     }
@@ -50,7 +54,7 @@ export class AttackManager implements Manager {
     if (effectiveDamage === 0) {
       message = `Attack power: ${attackPower}. Your defense absorbed all damage! Defense remaining: ${world.mapDefense}`;
     } else {
-      message = `Attack power: ${attackPower}. Damage Report: Employees Lost ${employeesLost}, Buildings Lost ${buildingsLost}. Defense remaining: ${world.mapDefense}`;
+      message = `Attack power: ${attackPower}. ${targetLabel} was attacked! Damage Report: Employees Lost ${employeesLost}, Buildings Lost ${buildingsLost}. Defense remaining: ${world.mapDefense}`;
     }
 
     world.alertInfo = {

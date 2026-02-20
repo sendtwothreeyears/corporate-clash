@@ -35,6 +35,7 @@ export interface BuildingConfig {
   cost: number;
   capacity: number;
   color: number;
+  maxHealth: number;
 }
 
 export const BUILDING_CONFIG: Record<BuildingType, BuildingConfig> = {
@@ -43,24 +44,28 @@ export const BUILDING_CONFIG: Record<BuildingType, BuildingConfig> = {
     cost: 50_000,
     capacity: 10,
     color: 0x4a90d9,
+    maxHealth: 500,
   },
   mediumOffice: {
     label: 'Medium Office',
     cost: 150_000,
     capacity: 20,
     color: 0x357abd,
+    maxHealth: 1000,
   },
   largeOffice: {
     label: 'Large Office',
     cost: 400_000,
     capacity: 30,
     color: 0x1a5276,
+    maxHealth: 2000,
   },
   lawfirm: {
     label: 'Lawfirm',
     cost: 50_000,
     capacity: 10,
     color: 0x1a5276,
+    maxHealth: 800,
   },
 };
 
@@ -199,6 +204,7 @@ export type OfficeType = 'office' | 'lawfirm';
 export interface Building {
   type: BuildingType;
   employees: (OfficeEmployee | LawfirmEmployee)[];
+  health: number;
 }
 
 export interface Tile {

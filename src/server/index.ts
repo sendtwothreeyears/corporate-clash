@@ -78,7 +78,7 @@ app.post('/game/action', async (c) => {
       return c.json({ error: 'insufficient funds' }, 400);
     }
     world.funds -= config.cost;
-    tile.building = { type: action.buildingType, employees: [] };
+    tile.building = { type: action.buildingType, employees: [], health: config.maxHealth };
     return c.json({ ok: true });
   }
 

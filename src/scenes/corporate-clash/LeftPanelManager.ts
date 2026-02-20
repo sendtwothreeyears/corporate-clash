@@ -1,5 +1,5 @@
 import type { Renderer } from '../../engine/types.js';
-import type { CorporateWorld, Manager } from './types.js';
+import { BUILDING_CONFIG, type CorporateWorld, type Manager } from './types.js';
 import {
   CANVAS_HEIGHT,
   LEFT_PANEL_WIDTH,
@@ -54,6 +54,25 @@ export class LeftPanelManager implements Manager {
         fontSize: 14,
         color: 0xcccccc,
       });
+
+      let yOffset = 136;
+      for (const row of world.grid) {
+        for (const tile of row) {
+          if (!tile.building) continue;
+          const config = BUILDING_CONFIG[tile.building.type];
+          renderer.drawText(
+            `${config.label}: ${tile.building.health}/${config.maxHealth}`,
+            10,
+            yOffset,
+            {
+              fontSize: 12,
+              color: 0xcccccc,
+            },
+          );
+          yOffset += 20;
+        }
+      }
+
       renderer.drawText(`Next attack: ${secondsLeft}`, 10, CANVAS_HEIGHT - 24, {
         fontSize: 14,
         color: 0xcccccc,
