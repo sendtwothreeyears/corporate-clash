@@ -213,7 +213,8 @@ export class MapManager implements Manager {
         const texture = this.buildingTextures.get(tile.building.type);
         if (!texture) continue;
 
-        const isThisHovered = isHovering && hovered.row === row && hovered.col === col;
+        const isThisHovered =
+          isHovering && hovered.row === row && hovered.col === col;
 
         const { x, y } = this.gridToIso(row, col);
         const scale = ISO_TILE_W / texture.width;
