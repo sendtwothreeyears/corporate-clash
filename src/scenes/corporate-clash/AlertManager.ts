@@ -45,14 +45,14 @@ export class AlertManager implements Manager {
     );
 
     let title: string;
-    let message: string;
+    let subtitle: string;
 
     if (report.isAttacker) {
       title = 'Attack Report';
-      message = `You attacked ${report.defender}! You lost ${report.employeesLost} employees. They lost ${report.buildingsLost} buildings.`;
+      subtitle = `You attacked ${report.defender}!`;
     } else {
       title = 'Under Attack!';
-      message = `${report.attackerName} attacked you! You lost ${report.employeesLost} employees and ${report.buildingsLost} buildings.`;
+      subtitle = `${report.attackerName} attacked you!`;
     }
 
     renderer.drawText(title, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 85, {
@@ -61,11 +61,23 @@ export class AlertManager implements Manager {
       anchor: 0.5,
     });
 
-    renderer.drawText(message, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 10, {
+    renderer.drawText(subtitle, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 30, {
       fontSize: 14,
       color: 0xffffff,
       anchor: 0.5,
     });
+    renderer.drawText(
+      `Employees Lost: ${report.employeesLost}`,
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2,
+      { fontSize: 14, color: 0xffffff, anchor: 0.5 },
+    );
+    renderer.drawText(
+      `Buildings Lost: ${report.buildingsLost}`,
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT / 2 + 20,
+      { fontSize: 14, color: 0xffffff, anchor: 0.5 },
+    );
 
     renderer.drawText(
       'Space bar to continue...',

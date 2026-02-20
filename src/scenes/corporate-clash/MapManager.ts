@@ -110,20 +110,21 @@ export class MapManager implements Manager {
       world.uiMode.kind === 'officeEmployeePanel' ||
       world.uiMode.kind === 'lawfirmEmployeePanel'
     ) {
-      world.uiMode = { kind: 'none' };
-      return;
+      const selected = world.uiMode.tile;
+      if (selected.row === gridPos.row && selected.col === gridPos.col) {
+        world.uiMode = { kind: 'none' };
+        return;
+      }
     }
 
-    if (world.uiMode.kind === 'none') {
-      const tile = world.grid[gridPos.row][gridPos.col];
+    const tile = world.grid[gridPos.row][gridPos.col];
 
-      if (!tile.building) {
-        world.uiMode = { kind: 'buildingPanel', tile: gridPos };
-      } else if (tile.building.type === 'lawfirm') {
-        world.uiMode = { kind: 'lawfirmEmployeePanel', tile: gridPos };
-      } else {
-        world.uiMode = { kind: 'officeEmployeePanel', tile: gridPos };
-      }
+    if (!tile.building) {
+      world.uiMode = { kind: 'buildingPanel', tile: gridPos };
+    } else if (tile.building.type === 'lawfirm') {
+      world.uiMode = { kind: 'lawfirmEmployeePanel', tile: gridPos };
+    } else {
+      world.uiMode = { kind: 'officeEmployeePanel', tile: gridPos };
     }
   }
 
@@ -170,6 +171,12 @@ export class MapManager implements Manager {
       col,
       buildingType,
     });
+
+    const panel =
+      buildingType === 'lawfirm'
+        ? 'lawfirmEmployeePanel'
+        : 'officeEmployeePanel';
+    world.uiMode = { kind: panel, tile: { row, col } };
   }
 
   private handleEmployeeKey(
