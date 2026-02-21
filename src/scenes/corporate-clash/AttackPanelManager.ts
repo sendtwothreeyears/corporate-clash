@@ -87,7 +87,9 @@ export class AttackPanelManager implements Manager {
   render(world: CorporateWorld, renderer: Renderer): void {
     if (world.uiMode.kind !== 'attackPanel') return;
 
-    renderer.drawRect(0, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x16213e);
+    renderer.drawRect(0, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x16213e, {
+      alpha: 0.85,
+    });
 
     const { targetId, troops } = world.uiMode;
     let y = 10;

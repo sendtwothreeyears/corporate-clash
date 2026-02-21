@@ -23,7 +23,9 @@ export class RightPanelManager implements Manager {
   render(world: CorporateWorld, renderer: Renderer): void {
     if (world.phase !== 'playing') return;
 
-    renderer.drawRect(0, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x16213e);
+    renderer.drawRect(0, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x16213e, {
+      alpha: 0.85,
+    });
 
     if (world.uiMode.kind === 'buildingPanel') {
       this.renderBuildingPanel(world, renderer);

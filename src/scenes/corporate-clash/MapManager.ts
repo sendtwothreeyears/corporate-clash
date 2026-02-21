@@ -5,6 +5,10 @@ import {
   ISO_TILE_W,
   ISO_TILE_H,
   MAP_OFFSET_Y,
+  MAP_PADDING,
+  LEFT_PANEL_WIDTH,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
 } from '../../engine/types.js';
 import {
   BUILDING_TYPES,
@@ -40,6 +44,7 @@ export class MapManager implements Manager {
     left: Texture;
     right: Texture;
   } | null = null;
+  private backgroundTexture: Texture | null = null;
   private rotation: 0 | 1 | 2 | 3 = 0;
 
   private rotateCoords(row: number, col: number): { row: number; col: number } {
@@ -244,10 +249,12 @@ export class MapManager implements Manager {
         '/assets/tiles/base-top.png',
         '/assets/tiles/base-left.png',
         '/assets/tiles/base-right.png',
+        '/assets/background.png',
       ]).then((textures) => {
         for (const texture of Object.values(textures) as Texture[]) {
           texture.source.scaleMode = 'nearest';
         }
+        this.backgroundTexture = textures['/assets/background.png'];
         this.buildingTextures.set(
           'smallOffice',
           textures['/assets/buildings/smallOffice.png'],
@@ -282,6 +289,20 @@ export class MapManager implements Manager {
         ? world.uiMode.tile
         : null;
     const hasActive = selected || isHovering;
+
+    // background image (spans the full canvas)
+    if (this.backgroundTexture) {
+      const mapOriginX = LEFT_PANEL_WIDTH + MAP_PADDING;
+      const bgScale = CANVAS_WIDTH / this.backgroundTexture.width;
+      const bgW = CANVAS_WIDTH;
+      const bgH = this.backgroundTexture.height * bgScale * 1.1;
+      const bgX = (CANVAS_WIDTH - bgW) / 2 - mapOriginX;
+      const bgY = (CANVAS_HEIGHT - bgH) / 2 - MAP_OFFSET_Y - 20;
+      renderer.drawSprite(this.backgroundTexture, bgX, bgY, {
+        width: bgW,
+        height: bgH,
+      });
+    }
 
     // ground tiles
     const sortedTiles: { row: number; col: number; depth: number }[] = [];

@@ -30,7 +30,9 @@ export class LeftPanelManager implements Manager {
 
   render(world: CorporateWorld, renderer: Renderer): void {
     if (world.phase === 'playing') {
-      renderer.drawRect(0, 0, LEFT_PANEL_WIDTH, CANVAS_HEIGHT, 0x16213e);
+      renderer.drawRect(0, 0, LEFT_PANEL_WIDTH, CANVAS_HEIGHT, 0x16213e, {
+        alpha: 0.85,
+      });
 
       const { funds, mapDefense, buildings, employees } = this.display(world);
       renderer.drawText(`$${funds.toLocaleString()}`, 10, 14, {
