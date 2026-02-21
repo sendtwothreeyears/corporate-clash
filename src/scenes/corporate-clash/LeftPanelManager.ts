@@ -34,43 +34,55 @@ export class LeftPanelManager implements Manager {
         alpha: 0.85,
       });
 
-      const { funds, mapDefense, buildings, employees } = this.display(world);
-      renderer.drawText(`$${funds.toLocaleString()}`, 10, 14, {
-        fontSize: 20,
-        color: 0xfb8000,
+      const me = world.players.find((p) => p.id === world.playerId);
+      const playerName = me?.name ?? 'Unknown';
+
+      renderer.drawText(playerName, 10, 14, {
+        fontSize: 18,
+        color: 0xffffff,
       });
 
-      renderer.drawText(`Defense: ${mapDefense.toLocaleString()}`, 10, 44, {
-        fontSize: 20,
-        color: 0xfb8000,
-      });
-
-      renderer.drawRect(10, 74, LEFT_PANEL_WIDTH - 20, 1, 0xfb8000, {
+      renderer.drawRect(10, 38, LEFT_PANEL_WIDTH - 20, 1, 0xfb8000, {
         alpha: 0.3,
       });
 
-      renderer.drawText(`Buildings: ${buildings}`, 10, 86, {
+      const { funds, mapDefense, buildings, employees } = this.display(world);
+      renderer.drawText(`$${funds.toLocaleString()}`, 10, 48, {
+        fontSize: 20,
+        color: 0xfb8000,
+      });
+
+      renderer.drawText(`Defense: ${mapDefense.toLocaleString()}`, 10, 78, {
+        fontSize: 20,
+        color: 0xfb8000,
+      });
+
+      renderer.drawRect(10, 108, LEFT_PANEL_WIDTH - 20, 1, 0xfb8000, {
+        alpha: 0.3,
+      });
+
+      renderer.drawText(`Buildings: ${buildings}`, 10, 120, {
         fontSize: 14,
         color: 0xcccccc,
       });
-      renderer.drawText(`Employees: ${employees}`, 10, 116, {
+      renderer.drawText(`Employees: ${employees}`, 10, 150, {
         fontSize: 14,
         color: 0xcccccc,
       });
-      renderer.drawText(`Players: ${world.players.length}`, 10, 146, {
+      renderer.drawText(`Players: ${world.players.length}`, 10, 180, {
         fontSize: 14,
         color: 0xcccccc,
       });
 
       const nextAttackSecs = Math.ceil(world.attackTimer * TICK_RATE_S);
-      renderer.drawText(`Next raid: ${nextAttackSecs}s`, 10, 176, {
+      renderer.drawText(`Next raid: ${nextAttackSecs}s`, 10, 210, {
         fontSize: 14,
         color: 0xe74c3c,
       });
 
       if (world.defenseBuffer > 0) {
         const bufferSecs = Math.ceil(world.defenseBuffer * TICK_RATE_S);
-        renderer.drawText(`Shield: ${bufferSecs}s`, 10, 200, {
+        renderer.drawText(`Shield: ${bufferSecs}s`, 10, 234, {
           fontSize: 14,
           color: 0x3498db,
         });
