@@ -1,5 +1,6 @@
 import type { Renderer } from '../../engine/types.js';
 import type { CorporateWorld, Manager } from './types.js';
+import { EMPLOYEE_CONFIG } from './types.js';
 import {
   CANVAS_HEIGHT,
   LEFT_PANEL_WIDTH,
@@ -10,12 +11,17 @@ export class LeftPanelManager implements Manager {
   display(world: CorporateWorld) {
     let buildings = 0;
     let employees = 0;
+    let profitPerTick = 0;
 
     for (const row of world.grid) {
       for (const tile of row) {
         if (tile.building) {
           buildings++;
           employees += tile.building.employees.length;
+          for (const emp of tile.building.employees) {
+            const cfg = EMPLOYEE_CONFIG[emp.type];
+            if (cfg) profitPerTick += cfg.profitPerTick;
+          }
         }
       }
     }
@@ -25,6 +31,7 @@ export class LeftPanelManager implements Manager {
       mapDefense: world.mapDefense,
       buildings,
       employees,
+      profitPerSec: profitPerTick / TICK_RATE_S,
     };
   }
 
@@ -46,43 +53,53 @@ export class LeftPanelManager implements Manager {
         alpha: 0.3,
       });
 
-      const { funds, mapDefense, buildings, employees } = this.display(world);
+      const { funds, mapDefense, buildings, employees, profitPerSec } =
+        this.display(world);
       renderer.drawText(`$${funds.toLocaleString()}`, 10, 48, {
         fontSize: 20,
         color: 0xfb8000,
       });
 
-      renderer.drawText(`Defense: ${mapDefense.toLocaleString()}`, 10, 78, {
+      const sign = profitPerSec >= 0 ? '+' : '-';
+      const rateColor = profitPerSec >= 0 ? 0x27ae60 : 0xe74c3c;
+      renderer.drawText(
+        `${sign}$${Math.abs(Math.round(profitPerSec)).toLocaleString()}/s`,
+        10,
+        72,
+        { fontSize: 12, color: rateColor },
+      );
+
+      renderer.drawText(`Defense: ${mapDefense.toLocaleString()}`, 10, 94, {
         fontSize: 20,
         color: 0xfb8000,
       });
 
-      renderer.drawRect(10, 108, LEFT_PANEL_WIDTH - 20, 1, 0xfb8000, {
+      renderer.drawRect(10, 124, LEFT_PANEL_WIDTH - 20, 1, 0xfb8000, {
         alpha: 0.3,
       });
 
-      renderer.drawText(`Buildings: ${buildings}`, 10, 120, {
+      renderer.drawText(`Buildings: ${buildings}`, 10, 136, {
         fontSize: 14,
         color: 0xcccccc,
       });
-      renderer.drawText(`Employees: ${employees}`, 10, 150, {
+      renderer.drawText(`Employees: ${employees}`, 10, 166, {
         fontSize: 14,
         color: 0xcccccc,
       });
-      renderer.drawText(`Players: ${world.players.length}`, 10, 180, {
+      renderer.drawText(`Online Players: ${world.players.length}`, 10, 196, {
         fontSize: 14,
         color: 0xcccccc,
       });
 
       const nextAttackSecs = Math.ceil(world.attackTimer * TICK_RATE_S);
-      renderer.drawText(`Next raid: ${nextAttackSecs}s`, 10, 210, {
+      renderer.drawText(`Next raid: ${nextAttackSecs}s`, 10, 226, {
         fontSize: 14,
         color: 0xe74c3c,
       });
 
       if (world.defenseBuffer > 0) {
         const bufferSecs = Math.ceil(world.defenseBuffer * TICK_RATE_S);
-        renderer.drawText(`Shield: ${bufferSecs}s`, 10, 234, {
+        renderer.drawText(`Shield: ${bufferSecs}s`, 10, 250, {
           fontSize: 14,
           color: 0x3498db,
         });
