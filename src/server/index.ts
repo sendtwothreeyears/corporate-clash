@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import { GRID_SIZE } from '../engine/types.js';
+import { GRID_SIZE, TICK_RATE_MS } from '../engine/types.js';
 import {
   BUILDING_CONFIG,
   BUILDING_TYPES,
   EMPLOYEE_CONFIG,
   EMPLOYEE_TYPES,
+  ATTACK_INTERVAL_TICKS,
   SELL_PERCENTAGE,
   UPGRADE_PATH,
   UPGRADE_COST_FACTOR,
@@ -19,10 +20,8 @@ import {
 } from '../scenes/corporate-clash/types.js';
 import { EconomyManager } from './EconomyManager.js';
 
-const TICK_RATE_MS = 150;
 const MAX_PLAYERS = 20;
 const ATTACK_COOLDOWN_TICKS = 100;
-const NPC_ATTACK_INTERVAL_TICKS = 200; // 30s at 150ms/tick (matches ATTACK_INTERVAL_TICKS in types.ts)
 const DEFENSE_BUFFER_TICKS = 400; // 60s immunity after being attacked
 const NPC_DAMAGE_PERCENT = 0.3;
 
@@ -100,7 +99,7 @@ setInterval(() => {
     // NPC periodic attacks
     player.world.attackTimer--;
     if (player.world.attackTimer <= 0) {
-      player.world.attackTimer = NPC_ATTACK_INTERVAL_TICKS;
+      player.world.attackTimer = ATTACK_INTERVAL_TICKS;
 
       // Only raid if player has no immunity and has employees
       if (player.defenseBuffer <= 0) {
