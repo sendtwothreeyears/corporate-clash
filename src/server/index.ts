@@ -71,6 +71,7 @@ function toGameState(player: PlayerState): GameState {
       funds: p.world.funds,
       buildingCount,
       employeeCount,
+      defenseBuffer: p.defenseBuffer,
     });
   }
 

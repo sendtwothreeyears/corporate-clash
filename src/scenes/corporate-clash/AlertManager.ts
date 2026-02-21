@@ -19,6 +19,7 @@ export class AlertManager implements Manager {
     if (world.uiMode.kind !== 'alert') return;
     if (key === 'Space') {
       this.savedReport = null;
+      world.attackActive = null;
       world.uiMode = { kind: 'none' };
     }
   }

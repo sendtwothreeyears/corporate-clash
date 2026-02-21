@@ -1,5 +1,9 @@
 import type { Renderer } from '../../engine/types.js';
-import { CANVAS_HEIGHT, RIGHT_PANEL_WIDTH } from '../../engine/types.js';
+import {
+  CANVAS_HEIGHT,
+  RIGHT_PANEL_WIDTH,
+  TICK_RATE_S,
+} from '../../engine/types.js';
 import type { CorporateWorld, Manager, GameAction } from './types.js';
 
 const PANEL_X = 10;
@@ -16,8 +20,7 @@ export class AttackPanelManager implements Manager {
       if (
         key === 'KeyA' &&
         world.uiMode.kind !== 'alert' &&
-        world.uiMode.kind !== 'confirm' &&
-        world.uiMode.kind !== 'attackPanel'
+        world.uiMode.kind !== 'confirm'
       ) {
         world.uiMode = { kind: 'attackPanel', targetId: null, troops: [] };
       }
@@ -36,7 +39,7 @@ export class AttackPanelManager implements Manager {
       const index = parseInt(key.replace('Digit', '')) - 1;
       const otherPlayers = world.players.filter((p) => p.id !== world.playerId);
       const target = otherPlayers[index];
-      if (target) {
+      if (target && target.defenseBuffer <= 0) {
         world.uiMode = { kind: 'attackPanel', targetId: target.id, troops: [] };
       }
       return;
@@ -127,9 +130,14 @@ export class AttackPanelManager implements Manager {
       y += LINE_HEIGHT;
       const otherPlayers = world.players.filter((p) => p.id !== world.playerId);
       otherPlayers.forEach((p, i) => {
-        renderer.drawText(`[${i + 1}] ${p.name}`, PANEL_X, y, {
+        const shielded = p.defenseBuffer > 0;
+        const shieldSecs = Math.ceil(p.defenseBuffer * TICK_RATE_S);
+        const label = shielded
+          ? `[${i + 1}] ${p.name} [Shield ${shieldSecs}s]`
+          : `[${i + 1}] ${p.name}`;
+        renderer.drawText(label, PANEL_X, y, {
           fontSize: OPTION_SIZE,
-          color: BRIGHT,
+          color: shielded ? DIM : BRIGHT,
         });
         y += LINE_HEIGHT - 4;
         renderer.drawText(

@@ -209,6 +209,7 @@ export interface PlayerInfo {
   funds: number;
   buildingCount: number;
   employeeCount: number;
+  defenseBuffer: number;
 }
 
 export interface AttackTroop {
