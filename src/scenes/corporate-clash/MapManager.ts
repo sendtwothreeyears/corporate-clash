@@ -4,6 +4,7 @@ import {
   GRID_SIZE,
   ISO_TILE_W,
   ISO_TILE_H,
+  MAP_OFFSET_Y,
 } from '../../engine/types.js';
 import {
   BUILDING_TYPES,
@@ -362,9 +363,9 @@ export class MapManager implements Manager {
     // rotation hint
     renderer.drawText(
       `[R] Rotate | Facing ${DIRECTION_LABELS[this.rotation]}`,
-      MAP_AREA_W - 10,
-      10,
-      { fontSize: 12, color: 0x997744, anchor: 1 },
+      -20,
+      MAP_AREA_H - MAP_OFFSET_Y - 24,
+      { fontSize: 12, color: 0x997744, anchor: 0 },
     );
   }
 }
