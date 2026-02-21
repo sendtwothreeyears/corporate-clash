@@ -374,6 +374,5 @@ export class MapManager implements Manager {
         alpha: hasActive && !isThisHovered && !isThisSelected ? 0.3 : 1,
       });
     }
-
   }
 }

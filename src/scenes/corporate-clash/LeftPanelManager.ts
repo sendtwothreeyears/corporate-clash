@@ -92,7 +92,12 @@ export class LeftPanelManager implements Manager {
       });
       bottomY -= 20;
 
-      const dirLabels: Record<number, string> = { 0: 'SE', 1: 'SW', 2: 'NW', 3: 'NE' };
+      const dirLabels: Record<number, string> = {
+        0: 'SE',
+        1: 'SW',
+        2: 'NW',
+        3: 'NE',
+      };
       renderer.drawText(
         `[R] Rotate | Facing ${dirLabels[world.mapRotation]}`,
         10,
