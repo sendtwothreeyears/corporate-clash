@@ -4,10 +4,17 @@ import {
   GRID_SIZE,
   ISO_TILE_W,
   ISO_TILE_H,
+  MAP_OFFSET_Y,
+  MAP_PADDING,
+  LEFT_PANEL_WIDTH,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
 } from '../../engine/types.js';
 import {
+  BUILDING_CONFIG,
   BUILDING_TYPES,
-  type EmployeeBuildingType,
+  UPGRADE_PATH,
+  SELL_PERCENTAGE,
   OFFICE_EMPLOYEE_TYPES,
   LAWFIRM_EMPLOYEE_TYPES,
   type CorporateWorld,
@@ -25,13 +32,6 @@ const ISO_ORIGIN_X = MAP_AREA_W / 2;
 const ISO_ORIGIN_Y = (MAP_AREA_H - GRID_SIZE * ISO_TILE_H) / 2 + HALF_H;
 
 const MAX = GRID_SIZE - 1;
-const DIRECTION_LABELS: Record<number, string> = {
-  0: 'SE',
-  1: 'SW',
-  2: 'NW',
-  3: 'NE',
-};
-
 export class MapManager implements Manager {
   private buildingTextures = new Map<string, Texture>();
   private tileTextures: {
@@ -39,6 +39,7 @@ export class MapManager implements Manager {
     left: Texture;
     right: Texture;
   } | null = null;
+  private backgroundTexture: Texture | null = null;
   private rotation: 0 | 1 | 2 | 3 = 0;
 
   private rotateCoords(row: number, col: number): { row: number; col: number } {
@@ -96,58 +97,52 @@ export class MapManager implements Manager {
     );
   }
 
-  onRightClick(world: CorporateWorld, pixelX: number, pixelY: number): void {
+  onRightClick(_world: CorporateWorld, pixelX: number, pixelY: number): void {
     const gridPos = this.pixelToGrid(pixelX, pixelY);
     console.log('Right click at', { pixelX, pixelY }, gridPos);
   }
 
-  onLeftClick(world: CorporateWorld, pixelX: number, pixelY: number): void {
-    const gridPos = this.pixelToGrid(pixelX, pixelY);
-    if (!this.isInBounds(world, gridPos)) return;
-
+  onMouseMove(world: CorporateWorld, pixelX: number, pixelY: number): void {
     if (
-      world.uiMode.kind === 'buildingPanel' ||
-      world.uiMode.kind === 'officeEmployeePanel' ||
-      world.uiMode.kind === 'lawfirmEmployeePanel'
-    ) {
-      const selected = world.uiMode.tile;
-      if (selected.row === gridPos.row && selected.col === gridPos.col) {
-        world.uiMode = { kind: 'none' };
-        return;
-      }
+      world.uiMode.kind === 'alert' ||
+      world.uiMode.kind === 'attackPanel' ||
+      world.uiMode.kind === 'confirm'
+    )
+      return;
+    const gridPos = this.pixelToGrid(pixelX, pixelY);
+    world.hoveredTile = gridPos;
+    this.syncPanelToTile(world, gridPos);
+  }
+
+  private syncPanelToTile(world: CorporateWorld, gridPos: GridPos): void {
+    if (!this.isInBounds(world, gridPos)) {
+      world.uiMode = { kind: 'none' };
+      return;
     }
 
     const tile = world.grid[gridPos.row][gridPos.col];
-
     if (!tile.building) {
       world.uiMode = { kind: 'buildingPanel', tile: gridPos };
-    } else if (tile.building.type === 'lawfirm') {
-      world.uiMode = { kind: 'lawfirmEmployeePanel', tile: gridPos };
     } else {
-      world.uiMode = { kind: 'officeEmployeePanel', tile: gridPos };
+      world.uiMode = { kind: 'buildingDetailPanel', tile: gridPos };
     }
-  }
-
-  onMouseMove(world: CorporateWorld, pixelX: number, pixelY: number): void {
-    if (world.uiMode.kind === 'alert') return;
-    const gridPos = this.pixelToGrid(pixelX, pixelY);
-    world.hoveredTile = gridPos;
   }
 
   onKeyDown(world: CorporateWorld, key: string): void {
     if (key === 'KeyR') {
       this.rotation = ((this.rotation + 1) % 4) as 0 | 1 | 2 | 3;
+      world.mapRotation = this.rotation;
       return;
     }
 
     if (world.uiMode.kind === 'alert') {
       return;
+    } else if (world.uiMode.kind === 'confirm') {
+      this.handleConfirmKey(world, key);
     } else if (world.uiMode.kind === 'buildingPanel') {
       this.handleBuildingKey(world, key);
-    } else if (world.uiMode.kind === 'officeEmployeePanel') {
-      this.handleEmployeeKey(world, 'office', key);
-    } else if (world.uiMode.kind === 'lawfirmEmployeePanel') {
-      this.handleEmployeeKey(world, 'lawfirm', key);
+    } else if (world.uiMode.kind === 'buildingDetailPanel') {
+      this.handleBuildingDetailKey(world, key);
     }
   }
 
@@ -171,39 +166,75 @@ export class MapManager implements Manager {
       col,
       buildingType,
     });
-
-    const panel =
-      buildingType === 'lawfirm'
-        ? 'lawfirmEmployeePanel'
-        : 'officeEmployeePanel';
-    world.uiMode = { kind: panel, tile: { row, col } };
+    world.uiMode = { kind: 'buildingDetailPanel', tile: { row, col } };
   }
 
-  private handleEmployeeKey(
-    world: CorporateWorld,
-    buildingType: EmployeeBuildingType,
-    key: string,
-  ): void {
+  private handleBuildingDetailKey(world: CorporateWorld, key: string): void {
+    if (world.uiMode.kind !== 'buildingDetailPanel') return;
+
     if (key === 'Escape') {
       world.uiMode = { kind: 'none' };
       return;
     }
 
-    if (
-      world.uiMode.kind !== 'officeEmployeePanel' &&
-      world.uiMode.kind !== 'lawfirmEmployeePanel'
-    )
+    const { row, col } = world.uiMode.tile;
+    const building = world.grid[row][col].building;
+    if (!building) return;
+
+    // [S] Sell — enter confirmation
+    if (key === 'KeyS') {
+      const sellValue = Math.floor(
+        BUILDING_CONFIG[building.type].cost * SELL_PERCENTAGE,
+      );
+      const empCount = building.employees.length;
+      const detail =
+        empCount > 0
+          ? `Refund: $${sellValue.toLocaleString()}\n${empCount} employee${empCount > 1 ? 's' : ''} fired (no refund)`
+          : `Refund: $${sellValue.toLocaleString()}`;
+      world.uiMode = {
+        kind: 'confirm',
+        message: `Sell ${BUILDING_CONFIG[building.type].label}?`,
+        detail,
+        action: { kind: 'sell', playerId: world.playerId, row, col },
+        returnMode: { kind: 'buildingDetailPanel', tile: { row, col } },
+      };
       return;
+    }
 
+    // [X] Fire last employee — enter confirmation
+    if (key === 'KeyX') {
+      if (building.employees.length === 0) return;
+      world.uiMode = {
+        kind: 'confirm',
+        message: 'Fire 1 employee?',
+        detail: 'No refund.',
+        action: { kind: 'fire', playerId: world.playerId, row, col },
+        returnMode: { kind: 'buildingDetailPanel', tile: { row, col } },
+      };
+      return;
+    }
+
+    // [U] Upgrade — send directly (no confirmation)
+    if (key === 'KeyU') {
+      const nextType = UPGRADE_PATH[building.type];
+      if (!nextType) return;
+      this.sendAction({
+        kind: 'upgrade',
+        playerId: world.playerId,
+        row,
+        col,
+      });
+      return;
+    }
+
+    // [1-4] Hire employee
     const index = parseInt(key.replace('Digit', '')) - 1;
-
-    const employeeType =
-      buildingType === 'office'
-        ? OFFICE_EMPLOYEE_TYPES[index]
-        : LAWFIRM_EMPLOYEE_TYPES[index];
+    const isLawfirm = building.type === 'lawfirm';
+    const employeeType = isLawfirm
+      ? LAWFIRM_EMPLOYEE_TYPES[index]
+      : OFFICE_EMPLOYEE_TYPES[index];
     if (!employeeType) return;
 
-    const { row, col } = world.uiMode.tile;
     this.sendAction({
       kind: 'hire',
       playerId: world.playerId,
@@ -211,6 +242,27 @@ export class MapManager implements Manager {
       col,
       employeeType,
     });
+  }
+
+  private handleConfirmKey(world: CorporateWorld, key: string): void {
+    if (world.uiMode.kind !== 'confirm') return;
+
+    if (key === 'KeyY' || key === 'Enter') {
+      const action = world.uiMode.action;
+      this.sendAction(action);
+      // If selling, the building is gone — close panel
+      if (action.kind === 'sell') {
+        world.uiMode = { kind: 'none' };
+      } else {
+        world.uiMode = world.uiMode.returnMode;
+      }
+      return;
+    }
+
+    if (key === 'KeyN' || key === 'Escape') {
+      world.uiMode = world.uiMode.returnMode;
+      return;
+    }
   }
 
   private sendAction(action: GameAction): void {
@@ -232,10 +284,12 @@ export class MapManager implements Manager {
         '/assets/tiles/base-top.png',
         '/assets/tiles/base-left.png',
         '/assets/tiles/base-right.png',
+        '/assets/background.png',
       ]).then((textures) => {
         for (const texture of Object.values(textures) as Texture[]) {
           texture.source.scaleMode = 'nearest';
         }
+        this.backgroundTexture = textures['/assets/background.png'];
         this.buildingTextures.set(
           'smallOffice',
           textures['/assets/buildings/smallOffice.png'],
@@ -263,6 +317,20 @@ export class MapManager implements Manager {
     const hovered = world.hoveredTile;
     const isHovering = hovered && this.isInBounds(world, hovered);
 
+    // background image (spans the full canvas)
+    if (this.backgroundTexture) {
+      const mapOriginX = LEFT_PANEL_WIDTH + MAP_PADDING;
+      const bgScale = CANVAS_WIDTH / this.backgroundTexture.width;
+      const bgW = CANVAS_WIDTH;
+      const bgH = this.backgroundTexture.height * bgScale * 1.3;
+      const bgX = (CANVAS_WIDTH - bgW) / 2 - mapOriginX;
+      const bgY = (CANVAS_HEIGHT - bgH) / 2 - MAP_OFFSET_Y - 30;
+      renderer.drawSprite(this.backgroundTexture, bgX, bgY, {
+        width: bgW,
+        height: bgH,
+      });
+    }
+
     // ground tiles
     const sortedTiles: { row: number; col: number; depth: number }[] = [];
     for (let row = 0; row < world.grid.length; row++) {
@@ -275,45 +343,33 @@ export class MapManager implements Manager {
     sortedTiles.sort((a, b) => a.depth - b.depth);
 
     for (const { row, col } of sortedTiles) {
+      if (!this.tileTextures) continue;
       const { x, y } = this.gridToIso(row, col);
       const isThisTileHovered =
         isHovering && hovered.row === row && hovered.col === col;
-      const tileAlpha = isHovering && !isThisTileHovered ? 0.3 : 1;
+      const tileAlpha = isThisTileHovered ? 1 : 0.3;
 
-      if (this.tileTextures) {
-        // side face - each side's bounding box is HALF_W wide and scaled
-        const leftH =
-          this.tileTextures.left.height *
-          (HALF_W / this.tileTextures.left.width);
-        const rightH =
-          this.tileTextures.right.height *
-          (HALF_W / this.tileTextures.right.width);
+      const leftH =
+        this.tileTextures.left.height * (HALF_W / this.tileTextures.left.width);
+      const rightH =
+        this.tileTextures.right.height *
+        (HALF_W / this.tileTextures.right.width);
 
-        renderer.drawSprite(this.tileTextures.left, x - HALF_W, y, {
-          width: HALF_W,
-          height: leftH,
-          alpha: tileAlpha,
-        });
-        renderer.drawSprite(this.tileTextures.right, x, y, {
-          width: HALF_W,
-          height: rightH,
-          alpha: tileAlpha,
-        });
-        renderer.drawSprite(this.tileTextures.top, x - HALF_W, y - HALF_H, {
-          width: ISO_TILE_W,
-          height: ISO_TILE_H,
-          alpha: tileAlpha,
-        });
-      } else {
-        renderer.drawDiamond(
-          x,
-          y,
-          ISO_TILE_W,
-          ISO_TILE_H,
-          (row + col) % 2 === 0 ? 0x333333 : 0x222222,
-          { alpha: tileAlpha },
-        );
-      }
+      renderer.drawSprite(this.tileTextures.left, x - HALF_W, y, {
+        width: HALF_W,
+        height: leftH,
+        alpha: tileAlpha,
+      });
+      renderer.drawSprite(this.tileTextures.right, x, y, {
+        width: HALF_W,
+        height: rightH,
+        alpha: tileAlpha,
+      });
+      renderer.drawSprite(this.tileTextures.top, x - HALF_W, y - HALF_H, {
+        width: ISO_TILE_W,
+        height: ISO_TILE_H,
+        alpha: tileAlpha,
+      });
     }
 
     // buildings
@@ -346,21 +402,5 @@ export class MapManager implements Manager {
         alpha: isHovering && !isThisHovered ? 0.3 : 1,
       });
     }
-
-    if (world.hoveredTile && this.isInBounds(world, world.hoveredTile)) {
-      const { row, col } = world.hoveredTile;
-      const { x, y } = this.gridToIso(row, col);
-      renderer.drawDiamond(x, y, ISO_TILE_W, ISO_TILE_H, 0xffffff, {
-        alpha: 0.3,
-      });
-    }
-
-    // rotation hint
-    renderer.drawText(
-      `[R] Rotate | Facing ${DIRECTION_LABELS[this.rotation]}`,
-      MAP_AREA_W - 10,
-      10,
-      { fontSize: 12, color: 0x888888, anchor: 1 },
-    );
   }
 }

@@ -1,19 +1,27 @@
 import type { Renderer } from '../../engine/types.js';
-import { CANVAS_HEIGHT, RIGHT_PANEL_WIDTH } from '../../engine/types.js';
+import {
+  CANVAS_HEIGHT,
+  RIGHT_PANEL_WIDTH,
+  TICK_RATE_S,
+} from '../../engine/types.js';
 import type { CorporateWorld, Manager, GameAction } from './types.js';
 
 const PANEL_X = 10;
 const LINE_HEIGHT = 22;
 const HEADER_SIZE = 18;
 const OPTION_SIZE = 13;
-const DIM = 0x666666;
+const DIM = 0x665544;
 const BRIGHT = 0xffffff;
 
 export class AttackPanelManager implements Manager {
   onKeyDown(world: CorporateWorld, key: string): void {
     if (world.uiMode.kind !== 'attackPanel') {
       // 'A' key opens attack panel from default mode
-      if (key === 'KeyA' && world.uiMode.kind === 'none') {
+      if (
+        key === 'KeyA' &&
+        world.uiMode.kind !== 'alert' &&
+        world.uiMode.kind !== 'confirm'
+      ) {
         world.uiMode = { kind: 'attackPanel', targetId: null, troops: [] };
       }
       return;
@@ -31,7 +39,7 @@ export class AttackPanelManager implements Manager {
       const index = parseInt(key.replace('Digit', '')) - 1;
       const otherPlayers = world.players.filter((p) => p.id !== world.playerId);
       const target = otherPlayers[index];
-      if (target) {
+      if (target && target.defenseBuffer <= 0) {
         world.uiMode = { kind: 'attackPanel', targetId: target.id, troops: [] };
       }
       return;
@@ -87,7 +95,9 @@ export class AttackPanelManager implements Manager {
   render(world: CorporateWorld, renderer: Renderer): void {
     if (world.uiMode.kind !== 'attackPanel') return;
 
-    renderer.drawRect(0, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x000000);
+    renderer.drawRect(0, 0, RIGHT_PANEL_WIDTH, CANVAS_HEIGHT, 0x16213e, {
+      alpha: 0.85,
+    });
 
     const { targetId, troops } = world.uiMode;
     let y = 10;
@@ -106,7 +116,7 @@ export class AttackPanelManager implements Manager {
       y += LINE_HEIGHT;
       renderer.drawText('[ESC] Close', PANEL_X, y, {
         fontSize: OPTION_SIZE,
-        color: 0xaaaaaa,
+        color: 0x997744,
       });
       return;
     }
@@ -115,14 +125,19 @@ export class AttackPanelManager implements Manager {
     if (!targetId) {
       renderer.drawText('Pick target:', PANEL_X, y, {
         fontSize: OPTION_SIZE,
-        color: 0xaaaaaa,
+        color: 0x997744,
       });
       y += LINE_HEIGHT;
       const otherPlayers = world.players.filter((p) => p.id !== world.playerId);
       otherPlayers.forEach((p, i) => {
-        renderer.drawText(`[${i + 1}] ${p.name}`, PANEL_X, y, {
+        const shielded = p.defenseBuffer > 0;
+        const shieldSecs = Math.ceil(p.defenseBuffer * TICK_RATE_S);
+        const label = shielded
+          ? `[${i + 1}] ${p.name} [Shield ${shieldSecs}s]`
+          : `[${i + 1}] ${p.name}`;
+        renderer.drawText(label, PANEL_X, y, {
           fontSize: OPTION_SIZE,
-          color: BRIGHT,
+          color: shielded ? DIM : BRIGHT,
         });
         y += LINE_HEIGHT - 4;
         renderer.drawText(
@@ -131,7 +146,7 @@ export class AttackPanelManager implements Manager {
           y,
           {
             fontSize: OPTION_SIZE - 2,
-            color: 0xaaaaaa,
+            color: 0x997744,
           },
         );
         y += LINE_HEIGHT;
@@ -147,7 +162,7 @@ export class AttackPanelManager implements Manager {
 
       renderer.drawText('Send troops from:', PANEL_X, y, {
         fontSize: OPTION_SIZE,
-        color: 0xaaaaaa,
+        color: 0x997744,
       });
       y += LINE_HEIGHT;
 

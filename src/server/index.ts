@@ -1,24 +1,27 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import { GRID_SIZE } from '../engine/types.js';
+import { GRID_SIZE, TICK_RATE_MS } from '../engine/types.js';
 import {
   BUILDING_CONFIG,
   BUILDING_TYPES,
   EMPLOYEE_CONFIG,
   EMPLOYEE_TYPES,
+  ATTACK_INTERVAL_TICKS,
+  SELL_PERCENTAGE,
+  UPGRADE_PATH,
+  UPGRADE_COST_FACTOR,
   createWorld,
   getEmployeeCategory,
   type CorporateWorld,
+  type DamageReport,
   type GameAction,
   type GameState,
   type PlayerInfo,
 } from '../scenes/corporate-clash/types.js';
 import { EconomyManager } from './EconomyManager.js';
 
-const TICK_RATE_MS = 150;
 const MAX_PLAYERS = 20;
 const ATTACK_COOLDOWN_TICKS = 100;
-const NPC_ATTACK_INTERVAL_TICKS = 200; // 30s at 150ms/tick (matches ATTACK_INTERVAL_TICKS in types.ts)
 const DEFENSE_BUFFER_TICKS = 400; // 60s immunity after being attacked
 const NPC_DAMAGE_PERCENT = 0.3;
 
@@ -68,6 +71,7 @@ function toGameState(player: PlayerState): GameState {
       funds: p.world.funds,
       buildingCount,
       employeeCount,
+      defenseBuffer: p.defenseBuffer,
     });
   }
 
@@ -95,7 +99,7 @@ setInterval(() => {
     // NPC periodic attacks
     player.world.attackTimer--;
     if (player.world.attackTimer <= 0) {
-      player.world.attackTimer = NPC_ATTACK_INTERVAL_TICKS;
+      player.world.attackTimer = ATTACK_INTERVAL_TICKS;
 
       // Only raid if player has no immunity and has employees
       if (player.defenseBuffer <= 0) {
@@ -128,7 +132,8 @@ setInterval(() => {
                     if (getEmployeeCategory(e.type) === 'lawfirm') {
                       killRolls -= EMPLOYEE_CONFIG[e.type].health;
                       lawyersLost++;
-                      player.world.mapDefense -= EMPLOYEE_CONFIG[e.type].defenseBoost;
+                      player.world.mapDefense -=
+                        EMPLOYEE_CONFIG[e.type].defenseBoost;
                       return false;
                     }
                     return true;
@@ -151,7 +156,8 @@ setInterval(() => {
                     if (getEmployeeCategory(e.type) === 'office') {
                       killRolls--;
                       employeesLost++;
-                      player.world.mapDefense -= EMPLOYEE_CONFIG[e.type].defenseBoost;
+                      player.world.mapDefense -=
+                        EMPLOYEE_CONFIG[e.type].defenseBoost;
                       return false;
                     }
                     return true;
@@ -165,11 +171,16 @@ setInterval(() => {
             }
 
             player.world.attackActive = {
-              buildingsLost,
-              employeesLost: employeesLost + lawyersLost,
-              attackerName: 'Corporate Raiders',
-              defender: null,
               isAttacker: false,
+              attackerName: 'Corporate Raiders',
+              defenderName: player.name,
+              troopsSent: 0,
+              attacker: { employeesLost: 0, buildingsLost: 0 },
+              defender: {
+                employeesLost: employeesLost + lawyersLost,
+                buildingsLost,
+              },
+              cashStolen: 0,
             };
           }
 
@@ -293,6 +304,7 @@ app.post('/game/action', async (c) => {
     }
 
     // Remove troops from attacker's buildings (office workers first, preserve lawyers)
+    let attackerBuildingsLost = 0;
     for (const troop of action.troops) {
       const tile = player.world.grid[troop.row][troop.col];
       let toRemove = troop.count;
@@ -315,6 +327,7 @@ app.post('/game/action', async (c) => {
       });
       if (tile.building!.employees.length === 0) {
         tile.building = null;
+        attackerBuildingsLost++;
       }
     }
 
@@ -388,25 +401,38 @@ app.post('/game/action', async (c) => {
     }
 
     const defenderEmployeesLost = defenderLawyersLost + defenderRegularLost;
-
     const attackerEmployeesLost = totalAttackers - attackersLeft;
 
+    // Cash steal: 10% of target's funds per building destroyed, capped at 50%
+    let cashStolen = 0;
+    if (defenderBuildingsLost > 0) {
+      const maxSteal = Math.floor(target.world.funds * 0.5);
+      cashStolen = Math.min(
+        Math.floor(target.world.funds * 0.1 * defenderBuildingsLost),
+        maxSteal,
+      );
+      target.world.funds -= cashStolen;
+      player.world.funds += cashStolen;
+    }
+
     // Set damage reports on both players
-    player.world.attackActive = {
-      buildingsLost: 0,
-      employeesLost: attackerEmployeesLost,
-      attackerName: null,
-      defender: target.name,
-      isAttacker: true,
+    const report: Omit<DamageReport, 'isAttacker'> = {
+      attackerName: player.name,
+      defenderName: target.name,
+      troopsSent: totalAttackers,
+      attacker: {
+        employeesLost: attackerEmployeesLost,
+        buildingsLost: attackerBuildingsLost,
+      },
+      defender: {
+        employeesLost: defenderEmployeesLost,
+        buildingsLost: defenderBuildingsLost,
+      },
+      cashStolen,
     };
 
-    target.world.attackActive = {
-      buildingsLost: defenderBuildingsLost,
-      employeesLost: defenderEmployeesLost,
-      attackerName: player.name,
-      defender: null,
-      isAttacker: false,
-    };
+    player.world.attackActive = { ...report, isAttacker: true };
+    target.world.attackActive = { ...report, isAttacker: false };
 
     player.attackCooldown = ATTACK_COOLDOWN_TICKS;
     target.defenseBuffer = DEFENSE_BUFFER_TICKS;
@@ -433,6 +459,27 @@ app.post('/game/action', async (c) => {
     }
     if (tile.building) {
       return c.json({ error: 'tile already has a building' }, 400);
+    }
+    // Require at least one office with employees before building a lawfirm
+    if (action.buildingType === 'lawfirm') {
+      let hasIncome = false;
+      for (const row of world.grid) {
+        for (const t of row) {
+          if (
+            t.building &&
+            t.building.type !== 'lawfirm' &&
+            t.building.employees.length > 0
+          ) {
+            hasIncome = true;
+          }
+        }
+      }
+      if (!hasIncome) {
+        return c.json(
+          { error: 'build an office and hire employees first' },
+          400,
+        );
+      }
     }
     const config = BUILDING_CONFIG[action.buildingType];
     if (world.funds < config.cost) {
@@ -461,6 +508,55 @@ app.post('/game/action', async (c) => {
     world.funds -= config.cost;
     tile.building.employees.push({ type: action.employeeType });
     world.mapDefense += config.defenseBoost;
+    return c.json({ ok: true });
+  }
+
+  if (action.kind === 'sell') {
+    if (!tile.building) {
+      return c.json({ error: 'no building on tile' }, 400);
+    }
+    const refund = Math.floor(
+      BUILDING_CONFIG[tile.building.type].cost * SELL_PERCENTAGE,
+    );
+    // Remove defense from all employees
+    for (const emp of tile.building.employees) {
+      world.mapDefense -= EMPLOYEE_CONFIG[emp.type].defenseBoost;
+    }
+    world.funds += refund;
+    tile.building = null;
+    return c.json({ ok: true });
+  }
+
+  if (action.kind === 'fire') {
+    if (!tile.building) {
+      return c.json({ error: 'no building on tile' }, 400);
+    }
+    if (tile.building.employees.length === 0) {
+      return c.json({ error: 'no employees to fire' }, 400);
+    }
+    const fired = tile.building.employees.pop()!;
+    world.mapDefense -= EMPLOYEE_CONFIG[fired.type].defenseBoost;
+    return c.json({ ok: true });
+  }
+
+  if (action.kind === 'upgrade') {
+    if (!tile.building) {
+      return c.json({ error: 'no building on tile' }, 400);
+    }
+    const nextType = UPGRADE_PATH[tile.building.type];
+    if (!nextType) {
+      return c.json({ error: 'building cannot be upgraded' }, 400);
+    }
+    const cost = Math.floor(
+      (BUILDING_CONFIG[nextType].cost -
+        BUILDING_CONFIG[tile.building.type].cost) *
+        UPGRADE_COST_FACTOR,
+    );
+    if (world.funds < cost) {
+      return c.json({ error: 'insufficient funds' }, 400);
+    }
+    world.funds -= cost;
+    tile.building.type = nextType;
     return c.json({ ok: true });
   }
 

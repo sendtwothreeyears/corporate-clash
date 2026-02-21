@@ -11,10 +11,12 @@ export interface GridPos {
 
 // --- Constants ---
 
-export const STARTING_FUNDS = 500_000;
-export const ATTACK_INTERVAL_TICKS = 2000;
+export const STARTING_FUNDS = 100_000;
+export const ATTACK_INTERVAL_TICKS = 300;
 export const MAP_DEFENSE = 0;
 export const OFFICE_EMPLOYEE_HEALTH = 1;
+export const SELL_PERCENTAGE = 0.8;
+export const UPGRADE_COST_FACTOR = 0.7;
 
 // --- Buildings ---
 export type BuildingType =
@@ -36,6 +38,11 @@ export interface BuildingConfig {
   capacity: number;
   color: number;
 }
+
+export const UPGRADE_PATH: Partial<Record<BuildingType, BuildingType>> = {
+  smallOffice: 'mediumOffice',
+  mediumOffice: 'largeOffice',
+};
 
 export const BUILDING_CONFIG: Record<BuildingType, BuildingConfig> = {
   smallOffice: {
@@ -93,31 +100,31 @@ export const OFFICE_EMPLOYEE_CONFIG: Record<
   officeWorker: {
     label: 'Office Worker',
     cost: 5_000,
-    profitPerTick: 800,
+    profitPerTick: 100,
     color: 0x95a5a6,
     health: OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 0,
   },
   staff: {
     label: 'Staff',
-    cost: 10_000,
-    profitPerTick: 2_000,
+    cost: 15_000,
+    profitPerTick: 225,
     color: 0x27ae60,
     health: OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 0,
   },
   marketing: {
     label: 'Marketing',
-    cost: 25_000,
-    profitPerTick: 5_000,
+    cost: 40_000,
+    profitPerTick: 500,
     color: 0xe67e22,
     health: OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 0,
   },
   engineer: {
     label: 'Engineer',
-    cost: 40_000,
-    profitPerTick: 8_000,
+    cost: 80_000,
+    profitPerTick: 800,
     color: 0x8e44ad,
     health: 1,
     defenseBoost: 0,
@@ -137,24 +144,24 @@ export const LAWFIRM_EMPLOYEE_CONFIG: Record<
 > = {
   juniorLawyer: {
     label: 'Junior Lawyer',
-    cost: 50_000,
-    profitPerTick: -1000,
+    cost: 30_000,
+    profitPerTick: -150,
     color: 0x8e44ad,
     health: 3 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 100,
   },
   associateLawyer: {
     label: 'Associate Lawyer',
-    cost: 100_000,
-    profitPerTick: -5000,
+    cost: 75_000,
+    profitPerTick: -400,
     color: 0x8e44ad,
     health: 4 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 500,
   },
   seniorCounselLawyer: {
     label: 'Senior Counsel Lawyer',
-    cost: 200_000,
-    profitPerTick: -10000,
+    cost: 150_000,
+    profitPerTick: -800,
     color: 0x8e44ad,
     health: 5 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 1000,
@@ -202,6 +209,7 @@ export interface PlayerInfo {
   funds: number;
   buildingCount: number;
   employeeCount: number;
+  defenseBuffer: number;
 }
 
 export interface AttackTroop {
@@ -224,17 +232,30 @@ export interface Tile {
 export type UIMode =
   | { kind: 'none' }
   | { kind: 'buildingPanel'; tile: GridPos }
-  | { kind: 'officeEmployeePanel'; tile: GridPos }
-  | { kind: 'lawfirmEmployeePanel'; tile: GridPos }
+  | { kind: 'buildingDetailPanel'; tile: GridPos }
+  | {
+      kind: 'confirm';
+      message: string;
+      detail: string;
+      action: GameAction;
+      returnMode: UIMode;
+    }
   | { kind: 'alert' }
   | { kind: 'attackPanel'; targetId: string | null; troops: AttackTroop[] };
 
-export interface DamageReport {
-  buildingsLost: number;
+export interface CombatSideResult {
   employeesLost: number;
-  attackerName: string | null;
-  defender: string | null;
+  buildingsLost: number;
+}
+
+export interface DamageReport {
   isAttacker: boolean;
+  attackerName: string;
+  defenderName: string;
+  troopsSent: number;
+  attacker: CombatSideResult;
+  defender: CombatSideResult;
+  cashStolen: number;
 }
 
 // --- Player Actions (client → server) ---
@@ -253,6 +274,24 @@ export type GameAction =
       row: number;
       col: number;
       employeeType: EmployeeType;
+    }
+  | {
+      kind: 'sell';
+      playerId: string;
+      row: number;
+      col: number;
+    }
+  | {
+      kind: 'fire';
+      playerId: string;
+      row: number;
+      col: number;
+    }
+  | {
+      kind: 'upgrade';
+      playerId: string;
+      row: number;
+      col: number;
     }
   | {
       kind: 'attack';
@@ -279,9 +318,10 @@ export interface GameState {
 
 export interface CorporateWorld extends GameState {
   playerId: string;
-  selectedTile: GridPos | null;
   uiMode: UIMode;
   hoveredTile: GridPos | null;
+  selectedTile: GridPos | null;
+  mapRotation: 0 | 1 | 2 | 3;
 }
 
 // --- Factory ---
@@ -305,14 +345,15 @@ export function createWorld(
     mapDefense: MAP_DEFENSE,
     grid,
     playerId,
-    selectedTile: null,
     uiMode: { kind: 'none' },
+    selectedTile: null,
     hoveredTile: null,
     attackActive: null,
     attackTimer: ATTACK_INTERVAL_TICKS,
     attackCooldown: 0,
     defenseBuffer: 0,
     players: [],
+    mapRotation: 0,
   };
 }
 
