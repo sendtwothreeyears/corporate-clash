@@ -11,8 +11,8 @@ export interface GridPos {
 
 // --- Constants ---
 
-export const STARTING_FUNDS = 500_000;
-export const ATTACK_INTERVAL_TICKS = 2000;
+export const STARTING_FUNDS = 100_000;
+export const ATTACK_INTERVAL_TICKS = 300;
 export const MAP_DEFENSE = 0;
 export const OFFICE_EMPLOYEE_HEALTH = 1;
 export const SELL_PERCENTAGE = 0.8;
@@ -100,31 +100,31 @@ export const OFFICE_EMPLOYEE_CONFIG: Record<
   officeWorker: {
     label: 'Office Worker',
     cost: 5_000,
-    profitPerTick: 800,
+    profitPerTick: 100,
     color: 0x95a5a6,
     health: OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 0,
   },
   staff: {
     label: 'Staff',
-    cost: 10_000,
-    profitPerTick: 2_000,
+    cost: 15_000,
+    profitPerTick: 225,
     color: 0x27ae60,
     health: OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 0,
   },
   marketing: {
     label: 'Marketing',
-    cost: 25_000,
-    profitPerTick: 5_000,
+    cost: 40_000,
+    profitPerTick: 500,
     color: 0xe67e22,
     health: OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 0,
   },
   engineer: {
     label: 'Engineer',
-    cost: 40_000,
-    profitPerTick: 8_000,
+    cost: 80_000,
+    profitPerTick: 800,
     color: 0x8e44ad,
     health: 1,
     defenseBoost: 0,
@@ -144,24 +144,24 @@ export const LAWFIRM_EMPLOYEE_CONFIG: Record<
 > = {
   juniorLawyer: {
     label: 'Junior Lawyer',
-    cost: 50_000,
-    profitPerTick: -1000,
+    cost: 30_000,
+    profitPerTick: -150,
     color: 0x8e44ad,
     health: 3 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 100,
   },
   associateLawyer: {
     label: 'Associate Lawyer',
-    cost: 100_000,
-    profitPerTick: -5000,
+    cost: 75_000,
+    profitPerTick: -400,
     color: 0x8e44ad,
     health: 4 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 500,
   },
   seniorCounselLawyer: {
     label: 'Senior Counsel Lawyer',
-    cost: 200_000,
-    profitPerTick: -10000,
+    cost: 150_000,
+    profitPerTick: -800,
     color: 0x8e44ad,
     health: 5 * OFFICE_EMPLOYEE_HEALTH,
     defenseBoost: 1000,

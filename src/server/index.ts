@@ -460,6 +460,27 @@ app.post('/game/action', async (c) => {
     if (tile.building) {
       return c.json({ error: 'tile already has a building' }, 400);
     }
+    // Require at least one office with employees before building a lawfirm
+    if (action.buildingType === 'lawfirm') {
+      let hasIncome = false;
+      for (const row of world.grid) {
+        for (const t of row) {
+          if (
+            t.building &&
+            t.building.type !== 'lawfirm' &&
+            t.building.employees.length > 0
+          ) {
+            hasIncome = true;
+          }
+        }
+      }
+      if (!hasIncome) {
+        return c.json(
+          { error: 'build an office and hire employees first' },
+          400,
+        );
+      }
+    }
     const config = BUILDING_CONFIG[action.buildingType];
     if (world.funds < config.cost) {
       return c.json({ error: 'insufficient funds' }, 400);

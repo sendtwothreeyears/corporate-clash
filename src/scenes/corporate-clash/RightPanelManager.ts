@@ -39,6 +39,21 @@ export class RightPanelManager implements Manager {
     }
   }
 
+  private hasIncome(world: CorporateWorld): boolean {
+    for (const row of world.grid) {
+      for (const t of row) {
+        if (
+          t.building &&
+          t.building.type !== 'lawfirm' &&
+          t.building.employees.length > 0
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private renderBuildingPanel(world: CorporateWorld, renderer: Renderer): void {
     let y = 10;
 
@@ -48,7 +63,19 @@ export class RightPanelManager implements Manager {
     });
     y += LINE_HEIGHT + 10;
 
-    BUILDING_TYPES.forEach((type, i) => {
+    const playerHasIncome = this.hasIncome(world);
+    const officeTypes = BUILDING_TYPES.filter((t) => t !== 'lawfirm');
+    const defenseTypes = BUILDING_TYPES.filter((t) => t === 'lawfirm');
+
+    // --- Income buildings ---
+    renderer.drawText('-- Income --', PANEL_X, y, {
+      fontSize: OPTION_SIZE - 1,
+      color: 0x997744,
+    });
+    y += LINE_HEIGHT;
+
+    officeTypes.forEach((type) => {
+      const i = BUILDING_TYPES.indexOf(type);
       const config = BUILDING_CONFIG[type];
       const canAfford = world.funds >= config.cost;
       const color = canAfford ? BRIGHT : DIM;
@@ -64,6 +91,36 @@ export class RightPanelManager implements Manager {
         y,
         { fontSize: OPTION_SIZE - 2, color: 0xaaaaaa },
       );
+      y += LINE_HEIGHT;
+    });
+
+    y += 6;
+
+    // --- Defense buildings ---
+    renderer.drawText('-- Defense --', PANEL_X, y, {
+      fontSize: OPTION_SIZE - 1,
+      color: 0x997744,
+    });
+    y += LINE_HEIGHT;
+
+    defenseTypes.forEach((type) => {
+      const i = BUILDING_TYPES.indexOf(type);
+      const config = BUILDING_CONFIG[type];
+      const canAfford = world.funds >= config.cost && playerHasIncome;
+      const color = canAfford ? BRIGHT : DIM;
+
+      renderer.drawText(`[${i + 1}] ${config.label}`, PANEL_X, y, {
+        fontSize: OPTION_SIZE,
+        color,
+      });
+      y += LINE_HEIGHT - 4;
+      const subtitle = playerHasIncome
+        ? `    $${config.cost.toLocaleString()}  cap: ${config.capacity}`
+        : '    Need income first';
+      renderer.drawText(subtitle, PANEL_X, y, {
+        fontSize: OPTION_SIZE - 2,
+        color: 0xaaaaaa,
+      });
       y += LINE_HEIGHT;
     });
 
@@ -227,8 +284,12 @@ export class RightPanelManager implements Manager {
         color,
       });
       y += LINE_HEIGHT - 4;
+      const profitLabel =
+        config.profitPerTick >= 0
+          ? `+${config.profitPerTick}/t`
+          : `${config.profitPerTick}/t`;
       renderer.drawText(
-        `    $${config.cost.toLocaleString()}  +${config.profitPerTick}/t`,
+        `    $${config.cost.toLocaleString()}  ${profitLabel}`,
         PANEL_X,
         y,
         { fontSize: OPTION_SIZE - 2, color: 0xaaaaaa },
