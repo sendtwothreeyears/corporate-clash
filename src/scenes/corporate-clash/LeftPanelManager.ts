@@ -90,6 +90,15 @@ export class LeftPanelManager implements Manager {
         fontSize: 14,
         color: 0x997744,
       });
+      bottomY -= 20;
+
+      const dirLabels: Record<number, string> = { 0: 'SE', 1: 'SW', 2: 'NW', 3: 'NE' };
+      renderer.drawText(
+        `[R] Rotate | Facing ${dirLabels[world.mapRotation]}`,
+        10,
+        bottomY,
+        { fontSize: 14, color: 0x997744 },
+      );
     }
   }
 }

@@ -30,13 +30,6 @@ const ISO_ORIGIN_X = MAP_AREA_W / 2;
 const ISO_ORIGIN_Y = (MAP_AREA_H - GRID_SIZE * ISO_TILE_H) / 2 + HALF_H;
 
 const MAX = GRID_SIZE - 1;
-const DIRECTION_LABELS: Record<number, string> = {
-  0: 'SE',
-  1: 'SW',
-  2: 'NW',
-  3: 'NE',
-};
-
 export class MapManager implements Manager {
   private buildingTextures = new Map<string, Texture>();
   private tileTextures: {
@@ -154,6 +147,7 @@ export class MapManager implements Manager {
   onKeyDown(world: CorporateWorld, key: string): void {
     if (key === 'KeyR') {
       this.rotation = ((this.rotation + 1) % 4) as 0 | 1 | 2 | 3;
+      world.mapRotation = this.rotation;
       return;
     }
 
@@ -381,12 +375,5 @@ export class MapManager implements Manager {
       });
     }
 
-    // rotation hint
-    renderer.drawText(
-      `[R] Rotate | Facing ${DIRECTION_LABELS[this.rotation]}`,
-      -20,
-      MAP_AREA_H - MAP_OFFSET_Y - 24,
-      { fontSize: 12, color: 0x997744, anchor: 0 },
-    );
   }
 }

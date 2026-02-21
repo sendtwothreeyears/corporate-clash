@@ -282,6 +282,7 @@ export interface CorporateWorld extends GameState {
   uiMode: UIMode;
   hoveredTile: GridPos | null;
   selectedTile: GridPos | null;
+  mapRotation: 0 | 1 | 2 | 3;
 }
 
 // --- Factory ---
@@ -313,6 +314,7 @@ export function createWorld(
     attackCooldown: 0,
     defenseBuffer: 0,
     players: [],
+    mapRotation: 0,
   };
 }
 
